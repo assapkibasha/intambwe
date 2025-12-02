@@ -1,7 +1,7 @@
 // controllers/studentController.js
-const Student = require('../models/Student');
-const Class = require('../models/Class');
-const Department = require('../models/Department');
+
+
+const { Department, Student,Class } = require('../../model');
 const { Op } = require('sequelize');
 
 const studentController = {

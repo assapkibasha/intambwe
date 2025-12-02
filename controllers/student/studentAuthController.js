@@ -1,8 +1,6 @@
 // controllers/studentAuthController.js
-const Student = require('../models/Student');
-const Class = require('../models/Class');
-const Department = require('../models/Department');
-const bcrypt = require('bcrypt');
+const { Department, Student,Class } = require('../../model');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { OAuth2Client } = require('google-auth-library');

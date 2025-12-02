@@ -1,7 +1,7 @@
 // routes/employeeRoutes.js
 const express = require('express');
 const router = express.Router();
-const employeeController = require('../controllers/employeeController');
+const employeeController = require('../../controllers/employee/employeeController');
 const { authenticateToken, authorizeOwnerOrAdmin, authorizeRoles } = require('../../middleware/employeeAuth');
 
 // CREATE

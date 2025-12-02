@@ -5,11 +5,11 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 
-const db = require('./models');
-const authRoutes = require('./routes/authRoutes');
-const classRoutes = require('./routes/classRoutes');
-const studentRoutes = require('./routes/studentRoutes');
-const attendanceRoutes = require('./routes/attendanceRoutes');
+const db = require('./model');
+const employeeRoute = require('./routes/employee');
+// const classRoutes = require('./routes/classRoutes');
+const studentRoutes = require('./routes/student');
+// const attendanceRoutes = require('./routes/attendanceRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -20,7 +20,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Routes
-app.use('/api/employee', authRoutes);
+app.use('/api/employee', employeeRoute);
 
 app.use('/api/student', studentRoutes);
 

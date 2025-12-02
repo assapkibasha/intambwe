@@ -1,6 +1,6 @@
 // middleware/auth.js
 const jwt = require('jsonwebtoken');
-const Employee = require('../models/Employee');
+const {Employee} = require('../model');
 
 // Verify JWT token and attach employee to request
 const authenticateToken = async (req, res, next) => {

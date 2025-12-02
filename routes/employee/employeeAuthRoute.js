@@ -1,8 +1,8 @@
 // routes/employeeAuthRoutes.js
 const express = require('express');
 const router = express.Router();
-const employeeAuthController = require('../controllers/employeeAuthController');
-const authMiddleware = require('../middleware/authMiddleware');
+const employeeAuthController = require('../../controllers/employee/employeeAuthController');
+const authMiddleware = require('../../middleware/employeeAuth');
 
 // Public routes (no authentication required)
 
@@ -25,15 +25,15 @@ router.post('/reset-password', employeeAuthController.resetPassword);
 // Protected routes (authentication required)
 
 // POST /api/auth/logout - Logout employee
-router.post('/logout', authMiddleware, employeeAuthController.logout);
+router.post('/logout', authMiddleware.authenticateToken, employeeAuthController.logout);
 
 // GET /api/auth/profile - Get current employee profile
-router.get('/profile', authMiddleware, employeeAuthController.getProfile);
+router.get('/profile', authMiddleware.authenticateToken, employeeAuthController.getProfile);
 
 // POST /api/auth/change-password - Change current employee password
-router.post('/change-password', authMiddleware, employeeAuthController.changePassword);
+router.post('/change-password', authMiddleware.authenticateToken, employeeAuthController.changePassword);
 
 // GET /api/auth/verify-token - Verify if token is valid
-router.get('/verify-token', authMiddleware, employeeAuthController.verifyToken);
+router.get('/verify-token', authMiddleware.authenticateToken, employeeAuthController.verifyToken);
 
 module.exports = router;

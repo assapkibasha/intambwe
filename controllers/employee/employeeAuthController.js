@@ -1,7 +1,7 @@
 // controllers/employeeAuthController.js
-const Employee = require('../models/Employee');
-const Department = require('../models/Department');
-const bcrypt = require('bcrypt');
+
+const { Department, Employee } = require('../../model');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { OAuth2Client } = require('google-auth-library');
 

@@ -1,8 +1,8 @@
 // controllers/employeeController.js
-const Employee = require('../models/Employee');
-const Department = require('../models/Department');
-const employeeValidator = require('../validators/employeeValidator');
-const bcrypt = require('bcrypt');
+
+const { Department, Employee } = require('../../model');
+const employeeValidator = require('../../validators/employeeValidator');
+const bcrypt = require('bcryptjs');
 
 const employeeController = {
   // CREATE - Add new employee
