@@ -4,6 +4,7 @@ import { hasAccess } from '../../layout/protectors/PrivateEmployeeRoute';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useEmployeeAuth } from '../../contexts/EmployeeAuthContext';
 
+
 // Sidebar Component
 const Sidebar = ({ isOpen, onClose }) => {
   const { employee:user } = useEmployeeAuth();
@@ -30,7 +31,7 @@ const navigate = useNavigate()
       roles: ['admin'],
       children: [
         { title: 'Employees', icon: Users, path: '/employee/dashboard/employees' },
-        { title: 'Departments', icon: Building2, path: '/employee/dashboard/departments' },
+        { title: 'Department', icon: Building2, path: '/employee/dashboard/department' },
         { title: 'Settings', icon: Settings, path: '/employee/dashboard/settings' }
       ]
     },
