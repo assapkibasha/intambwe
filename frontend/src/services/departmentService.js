@@ -4,7 +4,7 @@ class DepartmentService {
   // CREATE
   async createDepartment(data) {
     try {
-      const response = await api.post('/departments', data);
+      const response = await api.post('/department', data);
       return response.data;
     } catch (error) {
       const msg =
@@ -18,7 +18,7 @@ class DepartmentService {
   // GET ALL
   async getAllDepartments() {
     try {
-      const response = await api.get('/departments');
+      const response = await api.get('/department');
       return response.data;
     } catch (error) {
       const msg =
@@ -32,7 +32,7 @@ class DepartmentService {
   // GET BY ID
   async getDepartmentById(id) {
     try {
-      const response = await api.get(`/departments/${id}`);
+      const response = await api.get(`/department/${id}`);
       return response.data;
     } catch (error) {
       const msg =
@@ -46,7 +46,7 @@ class DepartmentService {
   // OVERVIEW
   async getDepartmentOverview(id) {
     try {
-      const response = await api.get(`/departments/${id}/overview`);
+      const response = await api.get(`/department/${id}/overview`);
       return response.data;
     } catch (error) {
       const msg =
@@ -60,7 +60,7 @@ class DepartmentService {
   // UPDATE (PUT)
   async updateDepartment(id, data) {
     try {
-      const response = await api.put(`/departments/${id}`, data);
+      const response = await api.put(`/department/${id}`, data);
       return response.data;
     } catch (error) {
       const msg =
@@ -74,7 +74,7 @@ class DepartmentService {
   // PATCH (optional)
   async patchDepartment(id, data) {
     try {
-      const response = await api.patch(`/departments/${id}`, data);
+      const response = await api.patch(`/department/${id}`, data);
       return response.data;
     } catch (error) {
       const msg =
@@ -88,7 +88,7 @@ class DepartmentService {
   // DELETE
   async deleteDepartment(id) {
     try {
-      const response = await api.delete(`/departments/${id}`);
+      const response = await api.delete(`/department/${id}`);
       return response.data;
     } catch (error) {
       const msg =
