@@ -6,7 +6,7 @@ const authMiddleware = require('../../middleware/studentAuth');
 
 // Public routes (no authentication required)
 
-// POST /api/student-auth/login - Login student
+// POST /api/student/auth/login - Login student
 router.post('/login', studentAuthController.login);
 
 // POST /api/student-auth/first-login - First login with temporary password
