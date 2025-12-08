@@ -9,6 +9,7 @@ import Home from "../pages/Home";
 import EmployeeProfilePage from "../pages/dashboard/employee/EmployeeProfilePage";
 import DepartmentDashboard from "../pages/dashboard/DepartmentPage";
 import EmployeeManagementDashboard from "../pages/dashboard/EmployeeManagement";
+import StudentDashboard from "../pages/dashboard/StudentPage";
 
 const LoadingSpinner = () => (
   <div className="loading-spinner">
@@ -42,6 +43,7 @@ const router = createBrowserRouter([
                     {path:'profile' , element:<EmployeeProfilePage />},
                     {path:'department' , element:<DepartmentDashboard />},
                     {path:'employees' , element:<EmployeeManagementDashboard />},
+                    {path:'students' , element:<StudentDashboard />},
 
 
                 ],
