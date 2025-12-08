@@ -7,6 +7,7 @@ import DashboardHomePage from "../pages/dashboard/DashboardHome";
 import Home from "../pages/Home";
 import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom'
 import EmployeeProfilePage from "../pages/dashboard/employee/EmployeeProfilePage";
+import StudentAuthentication from "../components/StudentAuthentication";
 
 const LoadingSpinner = () => (
   <div className="loading-spinner">
@@ -47,7 +48,8 @@ const router = createBrowserRouter([
         path: '/auth',
         element: <Outlet />,
         children: [
-            { path: 'employee/login', element: <EmployeeLogin /> }
+            { path: 'employee/login', element: <EmployeeLogin /> },
+            { path: 'student/login', element: <StudentAuthentication /> }
         ]
     }
 ])
