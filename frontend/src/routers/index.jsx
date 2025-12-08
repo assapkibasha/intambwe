@@ -1,13 +1,14 @@
-import { Suspense } from "react";
+import React,{ Suspense } from "react";
+import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom'
 import EmployeeDashboardLayout from "../layout/EmployeeDashboardLayout";
 import MainLayout from "../layout/MainLayout";
 import PrivateEmployeeRoute from "../layout/protectors/PrivateEmployeeRoute";
 import EmployeeLogin from "../pages/auth/employee/EmployeeLogin";
 import DashboardHomePage from "../pages/dashboard/DashboardHome";
 import Home from "../pages/Home";
-import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom'
 import EmployeeProfilePage from "../pages/dashboard/employee/EmployeeProfilePage";
-import TradeManagementSystem from "../pages/dashboard/employee/trade/TradeManagementSystem";
+import DepartmentDashboard from "../pages/dashboard/DepartmentPage";
+import EmployeeManagementDashboard from "../pages/dashboard/EmployeeManagement";
 
 const LoadingSpinner = () => (
   <div className="loading-spinner">
@@ -39,7 +40,10 @@ const router = createBrowserRouter([
                 children: [
                     {index:true , element:<DashboardHomePage />},
                     {path:'profile' , element:<EmployeeProfilePage />},
-                    {path:'trades' , element:<TradeManagementSystem />},
+                    {path:'department' , element:<DepartmentDashboard />},
+                    {path:'employees' , element:<EmployeeManagementDashboard />},
+
+
                 ],
             }
         ]
@@ -52,5 +56,6 @@ const router = createBrowserRouter([
         ]
     }
 ])
+
 
 export default router;
