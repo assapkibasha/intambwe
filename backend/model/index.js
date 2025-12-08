@@ -84,9 +84,18 @@ const syncDatabase = async () => {
     await sequelize.authenticate();
     console.log('Database connection established successfully.');
     
-    // Use { force: true } to drop and recreate tables (use with caution!)
-    // Use { alter: true } to modify tables to match models
-    await sequelize.sync({ alter: false });
+    // Sync models in dependency order
+    await Department.sync({ force: true });
+    await Employee.sync({ force: true });
+    await Class.sync({ force: true });
+    await Student.sync({ force: true });
+    await Subject.sync({ force: true });
+    await Timetable.sync({ force: true });
+    await Marks.sync({ force: true });
+    await TimetableEntry.sync({ force: true });
+    await SpecialEvent.sync({ force: true });
+    await Attendance.sync({ force: true });
+    
     console.log('All models synchronized successfully.');
   } catch (error) {
     console.error('Unable to connect to the database:', error);

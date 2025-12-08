@@ -56,7 +56,7 @@ app.use((err, req, res, next) => {
 });
 
 // Database sync and server start
-db.sequelize.sync({ alter: false })
+db.syncDatabase
   .then(() => {
     console.log('Database synchronized');
     app.listen(PORT, () => {
