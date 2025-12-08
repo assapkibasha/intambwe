@@ -292,6 +292,7 @@ const employeeAuthController = {
         attributes: { exclude: ['emp_password'] },
         include: [{
           model: Department,
+          as:'department',
           attributes: ['dpt_id', 'dpt_name']
         }]
       });
