@@ -29,19 +29,6 @@ class TradeService {
     }
   }
 
-  // GET TRADE BY ID
-  async getTradeById(id) {
-    try {
-      const response = await api.get(`/trade/gettrade/${id}`);
-      return response.data;
-    } catch (error) {
-      const msg =
-        error.response?.data?.message ||
-        error.message ||
-        "Failed to load trade";
-      throw new Error(msg);
-    }
-  }
 
   // UPDATE TRADE
   async updateTrade(id, data) {
@@ -79,7 +66,6 @@ export default tradeService;
 export const {
   createTrade,
   getAllTrades,
-  getTradeById,
   updateTrade,
   deleteTrade,
 } = tradeService;
