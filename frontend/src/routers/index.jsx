@@ -43,6 +43,7 @@ const router = createBrowserRouter([
                     {path:'profile' , element:<EmployeeProfilePage />},
                     {path:'department' , element:<DepartmentDashboard />},
                     {path:'employees' , element:<EmployeeManagementDashboard />},
+                     {path:'trades' , element:<TradeManagementSystem />},
 
 
                 ],
