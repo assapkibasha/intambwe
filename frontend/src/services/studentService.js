@@ -1,16 +1,30 @@
 import api from '../api/api'; // Axios instance with JWT interceptor
 
-class EmployeeAuthService {
-  // LOGIN
-  async login(credentials) {
+class StudentAuthService {
+  // SIGN UP
+  async signup(credentials) {
     try {
-      const response = await api.post('/employee/auth/login', credentials);
+      const response = await api.post('/student/auth/signup', credentials);
       return response.data;
     } catch (error) {
-      console.log(error);
-      
       const msg =
-        error.response?.data?.message || error.message || 'Login failed';
+        error.response?.data?.message ||
+        error.message ||
+        'Create an account failed';
+      throw new Error(msg);
+    }
+  }
+
+  // ✅ LOGIN (Added)
+  async login(credentials) {
+    try {
+      const response = await api.post('/student/auth/login', credentials);
+      return response.data;
+    } catch (error) {
+      const msg =
+        error.response?.data?.message ||
+        error.message ||
+        'Login failed';
       throw new Error(msg);
     }
   }
@@ -18,7 +32,7 @@ class EmployeeAuthService {
   // GOOGLE LOGIN
   async googleLogin(credential) {
     try {
-      const response = await api.post('/employee/auth/google', { credential });
+      const response = await api.post('/student/auth/google', { credential });
       return response.data;
     } catch (error) {
       const msg =
@@ -30,11 +44,13 @@ class EmployeeAuthService {
   // REFRESH TOKEN
   async refreshToken(refreshToken) {
     try {
-      const response = await api.post('/employee/auth/refresh-token', { refreshToken });
+      const response = await api.post('/student/auth/refresh-token', { refreshToken });
       return response.data;
     } catch (error) {
       const msg =
-        error.response?.data?.message || error.message || 'Token refresh failed';
+        error.response?.data?.message ||
+        error.message ||
+        'Token refresh failed';
       throw new Error(msg);
     }
   }
@@ -42,11 +58,13 @@ class EmployeeAuthService {
   // LOGOUT
   async logout() {
     try {
-      const response = await api.post('/employee/auth/logout');
+      const response = await api.post('/student/auth/logout');
       return response.data;
     } catch (error) {
       const msg =
-        error.response?.data?.message || error.message || 'Logout failed';
+        error.response?.data?.message ||
+        error.message ||
+        'Logout failed';
       throw new Error(msg);
     }
   }
@@ -54,7 +72,7 @@ class EmployeeAuthService {
   // GET PROFILE
   async getProfile() {
     try {
-      const response = await api.get('/employee/auth/profile');
+      const response = await api.get('/student/auth/profile');
       return response.data;
     } catch (error) {
       const msg =
@@ -65,14 +83,16 @@ class EmployeeAuthService {
     }
   }
 
-  // UPDATE EMPLOYEE PROFILE
-  async updateProfile(empId, data) {
+  // UPDATE PROFILE
+  async updateProfile(std_Id, data) {
     try {
-      const response = await api.put(`/employee/${empId}`, data);
+      const response = await api.put(`/student/${std_Id}`, data);
       return response.data;
     } catch (error) {
       const msg =
-        error.response?.data?.message || error.message || 'Failed to update profile';
+        error.response?.data?.message ||
+        error.message ||
+        'Failed to update profile';
       throw new Error(msg);
     }
   }
@@ -80,7 +100,7 @@ class EmployeeAuthService {
   // CHANGE PASSWORD
   async changePassword(data) {
     try {
-      const response = await api.post('/employee/auth/change-password', data);
+      const response = await api.post('/student/auth/change-password', data);
       return response.data;
     } catch (error) {
       const msg =
@@ -94,7 +114,7 @@ class EmployeeAuthService {
   // FORGOT PASSWORD
   async forgotPassword(email) {
     try {
-      const response = await api.post('/employee/auth/forgot-password', { emp_email: email });
+      const response = await api.post('/student/auth/forgot-password', { email });
       return response.data;
     } catch (error) {
       const msg =
@@ -108,7 +128,7 @@ class EmployeeAuthService {
   // RESET PASSWORD
   async resetPassword(resetToken, newPassword) {
     try {
-      const response = await api.post('/employee/auth/reset-password', {
+      const response = await api.post('/student/auth/reset-password', {
         resetToken,
         newPassword,
       });
@@ -125,7 +145,7 @@ class EmployeeAuthService {
   // VERIFY TOKEN
   async verifyToken() {
     try {
-      const response = await api.get('/employee/auth/verify-token');
+      const response = await api.get('/student/auth/verify-token');
       return response.data;
     } catch (error) {
       return { success: false, message: 'Invalid token' };
@@ -133,12 +153,13 @@ class EmployeeAuthService {
   }
 }
 
-const employeeAuthService = new EmployeeAuthService();
-export default employeeAuthService;
+const studentAuthService = new StudentAuthService();
+export default studentAuthService;
 
 // Optional named exports
 export const {
-  login,
+  signup,
+  login,       // <- added login here
   googleLogin,
   refreshToken,
   logout,
@@ -147,4 +168,4 @@ export const {
   forgotPassword,
   resetPassword,
   verifyToken,
-} = employeeAuthService;
+} = studentAuthService;
