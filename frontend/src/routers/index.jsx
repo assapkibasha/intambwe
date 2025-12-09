@@ -13,6 +13,8 @@ import TradeManagementSystem from "../pages/dashboard/employee/trade/TradeManage
 
 import StudentManagementDashboard from "../pages/dashboard/StudentManagementDashboard";
 import ClassManagementDashboard from "../pages/dashboard/class/ClassManagement";
+import StudentDashboard from "../pages/dashboard/StudentPage";
+import SubjectPage from "../pages/dashboard/SubjectPage";
 
 const LoadingSpinner = () => (
   <div className="loading-spinner">
@@ -57,7 +59,6 @@ const router = createBrowserRouter([
           { path: "employees", element: <EmployeeManagementDashboard /> },
           { path: "trades", element: <TradeManagementSystem /> },
           { path: "students", element: <StudentManagementDashboard /> },
-    
           {
             path: "classes",
             element: <ClassManagementDashboard />,
