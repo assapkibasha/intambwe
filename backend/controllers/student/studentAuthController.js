@@ -69,7 +69,7 @@ const clearAuthCookies = (res) => {
   });
 };
 
-const studentAuthController = {
+ const studentAuthController = {
   // SETUP CREDENTIALS - Generate initial credentials for newly created student
   async setupCredentials(req, res) {
     try {
