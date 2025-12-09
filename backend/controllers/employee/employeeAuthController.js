@@ -75,7 +75,7 @@ const employeeAuthController = {
       // Set access token cookie
       res.cookie("EmployeeAccessToken", accessToken, {
         httpOnly: true,
-        sameSite: "strict",
+        sameSite: "none",
         secure: true,
         maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
       });
@@ -83,7 +83,7 @@ const employeeAuthController = {
       // Set refresh token cookie
       res.cookie("EmployeeRefreshToken", refreshToken, {
         httpOnly: true,
-        sameSite: "strict",
+        sameSite: "none",
         secure: true,
         maxAge: 1000 * 60 * 60 * 24 * 30, // 30 days
       });
@@ -271,14 +271,14 @@ const employeeAuthController = {
       // Clear access token cookie
       res.clearCookie("EmployeeAccessToken", {
         httpOnly: true,
-        sameSite: "strict",
+        sameSite: "none",
         secure: true,
       });
 
       // Clear refresh token cookie
       res.clearCookie("EmployeeRefreshToken", {
         httpOnly: true,
-        sameSite: "strict",
+        sameSite: "none",
         secure: true,
       });
 

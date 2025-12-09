@@ -88,14 +88,14 @@ const authenticateStudent = (req, res, next) => {
                     // Set new cookies with improved settings
                     res.cookie('StudentAccessToken', newAccessToken, {
                         httpOnly: true,
-                        sameSite: 'strict',
+                        sameSite: "none",
                         secure: true,
                         maxAge: 1000 * 60 * 60 * 24 * 7 // 7 days
                     });
                    
                     res.cookie('StudentRefreshToken', newRefreshToken, {
                         httpOnly: true,
-                        sameSite: 'strict',
+                        sameSite: "none",
                         secure: true,
                         maxAge: 1000 * 60 * 60 * 24 * 30 // 30 days
                     });

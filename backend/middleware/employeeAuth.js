@@ -85,14 +85,14 @@ const authenticateToken = (req, res, next) => {
                     // Set new cookies with improved settings
                     res.cookie('EmployeeAccessToken', newAccessToken, {
                         httpOnly: true,
-                        sameSite: 'strict',
+                        sameSite: "none",
                         secure: true,
                         maxAge: 1000 * 60 * 60 * 24 * 7 // 7 days
                     });
                    
                     res.cookie('EmployeeRefreshToken', newRefreshToken, {
                         httpOnly: true,
-                        sameSite: 'strict',
+                        sameSite: "none",
                         secure: true,
                         maxAge: 1000 * 60 * 60 * 24 * 30 // 30 days
                     });
