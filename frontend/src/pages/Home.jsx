@@ -13,7 +13,6 @@ const Home = () => {
 
             <Herosection/>
             <Aboutsection/>
-
             <ServiceSection/>
             <HowItWorks />
             <BlogSection />
