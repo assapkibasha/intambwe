@@ -32,9 +32,16 @@ const routeRoleMapping = {
   '/employee/dashboard/profile': ['teacher', 'admin', 'stock_manager'],
 };
 
-export const hasAccess = (route, userRole) => {
-    const allowedRoles = routeRoleMapping[route];
-    return allowedRoles && allowedRoles.includes(userRole);
+export const hasAccess = (currentRoute, userRole) => {
+  // Find a mapped route that matches the currentRoute exactly or as a prefix
+  const matchedRoute = Object.keys(routeRoleMapping).find(route =>
+    currentRoute === route || currentRoute.startsWith(route)
+  );
+
+  if (!matchedRoute) return true; // no specific role restrictions for this route
+
+  const allowedRoles = routeRoleMapping[matchedRoute] || [];
+  return allowedRoles.includes(userRole);
 };
 
 

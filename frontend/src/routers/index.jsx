@@ -7,6 +7,11 @@ import EmployeeLogin from "../pages/auth/employee/EmployeeLogin";
 import DashboardHomePage from "../pages/dashboard/DashboardHome";
 import Home from "../pages/Home";
 import EmployeeProfilePage from "../pages/dashboard/employee/EmployeeProfilePage";
+import InventoryList from "../pages/dashboard/inventory/InventoryList";
+import InventoryRequests from "../pages/dashboard/inventory/InventoryRequests";
+import Categories from "../pages/dashboard/inventory/Categories";
+import StockIn from "../pages/dashboard/inventory/StockIn";
+import StockOut from "../pages/dashboard/inventory/StockOut";
 import DepartmentDashboard from "../pages/dashboard/DepartmentPage";
 import EmployeeManagementDashboard from "../pages/dashboard/EmployeeManagement";
 import TradeManagementSystem from "../pages/dashboard/employee/trade/TradeManagementSystem";
@@ -43,6 +48,12 @@ const router = createBrowserRouter([
                 children: [
                     { index: true, element: <DashboardHomePage /> },
                     { path: 'profile', element: <EmployeeProfilePage /> },
+                    { path: 'inventory', element: <InventoryList /> },
+                    { path: 'inventory/products', element: <InventoryList /> },
+                    { path: 'inventory/categories', element: <Categories /> },
+                    { path: 'inventory/requests', element: <InventoryRequests /> },
+                    { path: 'inventory/stock-in', element: <StockIn /> },
+                    { path: 'inventory/stock-out', element: <StockOut /> },
                     { path: 'department', element: <DepartmentDashboard /> },
                     { path: 'employees', element: <EmployeeManagementDashboard /> },
                     { path: 'trades', element: <TradeManagementSystem /> },

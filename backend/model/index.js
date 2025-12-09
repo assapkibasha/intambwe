@@ -11,6 +11,10 @@ const TimetableEntry = require("./TimetableEntry");
 const SpecialEvent = require("./SpecialEvent");
 const Attendance = require("./Attendance");
 const Trade = require("./Trade");
+const InventoryItem = require("./InventoryItem");
+const InventoryRequest = require('./InventoryRequest');
+const Category = require('./Category');
+const StockTransaction = require('./StockTransaction');
 const SubjectTrade = require("./SubjectTrade");
 
 // Define Associations
@@ -119,6 +123,20 @@ Attendance.belongsTo(Student, { foreignKey: "student_id" });
 Attendance.belongsTo(Class, { foreignKey: "class_id" });
 Attendance.belongsTo(Subject, { foreignKey: "subject_id" });
 
+// Inventory Associations
+InventoryItem.belongsTo(Employee, { foreignKey: 'added_by', as: 'addedBy' });
+InventoryItem.belongsTo(Category, { foreignKey: 'category_id', as: 'category' });
+// Requests
+InventoryRequest.belongsTo(InventoryItem, { foreignKey: 'item_id', as: 'item' });
+InventoryRequest.belongsTo(Employee, { foreignKey: 'requester_id', as: 'requester' });
+InventoryRequest.belongsTo(Employee, { foreignKey: 'approved_by', as: 'approver' });
+
+// Stock transactions
+StockTransaction.belongsTo(InventoryItem, { foreignKey: 'item_id', as: 'item' });
+StockTransaction.belongsTo(Employee, { foreignKey: 'performed_by', as: 'performedBy' });
+
+// expose in exports
+
 // Sync database
 const syncDatabase = async () => {
   try {
@@ -149,4 +167,8 @@ module.exports = {
   SubjectTrade,
   syncDatabase,
   Trade,
+  Category,
+  StockTransaction,
+  InventoryItem,
+  InventoryRequest,
 };
