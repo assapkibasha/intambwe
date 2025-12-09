@@ -14,6 +14,7 @@ class DepartmentService {
         'Failed to create department';
       throw new Error(msg);
     }
+    
   }
 
   // GET ALL
