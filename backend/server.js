@@ -38,7 +38,6 @@ app.use(morgan("dev"));
 /* ✅ Routes */
 app.use("/api/employee", employeeRoute);
 app.use("/api/student", studentRoutes);
-
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/class", classRoutes);
 app.use("/api/marks", marksRoutes);
@@ -65,7 +64,7 @@ app.use((err, req, res, next) => {
 
 /* ✅ Start server */
 db.sequelize
-  .sync({ alter: true })
+  .sync({ alter: false })
   .then(() => {
     console.log("Database synchronized");
     app.listen(PORT, () => {
