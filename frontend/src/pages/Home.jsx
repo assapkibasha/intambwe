@@ -12,10 +12,8 @@ const Home = () => {
             <Navbar />
             <Herosection/>
             <Aboutsection/>
-
             <ServiceSection/>
-
-        <Testimonial />
+            <Testimonial />
 
         </div>
     )
