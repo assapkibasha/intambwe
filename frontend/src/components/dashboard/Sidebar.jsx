@@ -25,7 +25,7 @@ const navigate = useNavigate()
       roles: ['teacher', 'admin', 'stock_manager']
     },
     {
-      title: 'Admin',
+      title: 'Staff',
       icon: Settings,
       roles: ['admin'],
       children: [
