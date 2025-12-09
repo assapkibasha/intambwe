@@ -41,14 +41,14 @@ const generateStudentRefreshToken = (student) => {
 const setAuthCookies = (res, accessToken, refreshToken) => {
   res.cookie('StudentAccessToken', accessToken, {
     httpOnly: true,
-    sameSite: 'strict',
+    sameSite: "none",
     secure: true,
     maxAge: 1000 * 60 * 60 * 24 * 7 // 7 days
   });
 
   res.cookie('StudentRefreshToken', refreshToken, {
     httpOnly: true,
-    sameSite: 'strict',
+    sameSite: "none",
     secure: true,
     maxAge: 1000 * 60 * 60 * 24 * 30 // 30 days
   });
@@ -58,13 +58,13 @@ const setAuthCookies = (res, accessToken, refreshToken) => {
 const clearAuthCookies = (res) => {
   res.clearCookie('StudentAccessToken', {
     httpOnly: true,
-    sameSite: 'strict',
+    sameSite: "none",
     secure: true
   });
 
   res.clearCookie('StudentRefreshToken', {
     httpOnly: true,
-    sameSite: 'strict',
+    sameSite: "none",
     secure: true
   });
 };
@@ -450,7 +450,7 @@ const studentAuthController = {
       // Update access token cookie
       res.cookie('StudentAccessToken', accessToken, {
         httpOnly: true,
-        sameSite: 'strict',
+        sameSite: "none",
         secure: true,
         maxAge: 1000 * 60 * 60 * 24 * 7
       });
