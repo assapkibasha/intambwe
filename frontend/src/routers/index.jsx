@@ -10,6 +10,8 @@ import EmployeeProfilePage from "../pages/dashboard/employee/EmployeeProfilePage
 import DepartmentDashboard from "../pages/dashboard/DepartmentPage";
 import EmployeeManagementDashboard from "../pages/dashboard/EmployeeManagement";
 import TradeManagementSystem from "../pages/dashboard/employee/trade/TradeManagementSystem";
+import StudentDashboard from "../pages/dashboard/StudentPage";
+
 
 const LoadingSpinner = () => (
   <div className="loading-spinner">
@@ -54,14 +56,35 @@ const router = createBrowserRouter([
           { path: "employees", element: <EmployeeManagementDashboard /> },
           { path: "trades", element: <TradeManagementSystem /> },
         ],
-      },
-    ],
-  },
-  {
-    path: "/auth",
-    element: <Outlet />,
-    children: [{ path: "employee/login", element: <EmployeeLogin /> }],
-  },
-]);
+    },
+    {
+        path: '/employee',
+        element: <PrivateEmployeeRoute><Outlet context={{ role: 'employee' }} /></PrivateEmployeeRoute>,
+        children: [
+            { index: true, element: <Navigate to={'/employee/dashboard'}></Navigate> },
+            {
+                path: 'dashboard',
+                element: <SuspenseWrapper><EmployeeDashboardLayout role={'employee'} /> </SuspenseWrapper>,
+                children: [
+                    { index: true, element: <DashboardHomePage /> },
+                    { path: 'profile', element: <EmployeeProfilePage /> },
+                    { path: 'department', element: <DepartmentDashboard /> },
+                    { path: 'employees', element: <EmployeeManagementDashboard /> },
+                    { path: 'trades', element: <TradeManagementSystem /> },
+                    {path:'students' , element:<StudentDashboard />},
+
+                ],
+            }
+        ]
+    },
+    {
+        path: '/auth',
+        element: <Outlet />,
+        children: [
+            { path: 'employee/login', element: <EmployeeLogin /> }
+        ]
+    }
+])
+
 
 export default router;

@@ -1,8 +1,13 @@
 // routes/employeeAuthRoutes.js
 const express = require("express");
 const router = express.Router();
+<<<<<<< HEAD:backend/routes/employee/employeeAuthRoute.js
 const employeeAuthController = require("../../controllers/employee/employeeAuthController");
 const authMiddleware = require("../../middleware/employeeAuth");
+=======
+const employeeAuthController = require('../../../controllers/employee/employeeAuthController');
+const authMiddleware = require('../../../middleware/employeeAuth');
+>>>>>>> main:backend/routes/attendance/employee/employeeAuthRoute.js
 
 // Public routes (no authentication required)
 
