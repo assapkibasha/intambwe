@@ -39,7 +39,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       color: 'from-blue-500 to-cyan-500'
     },
     {
-      title: 'Admin',
+      title: 'Staff',
       icon: Settings,
       roles: ['admin'],
       color: 'from-purple-500 to-pink-500',
@@ -80,7 +80,8 @@ const Sidebar = ({ isOpen, onClose }) => {
       children: [
         { title: 'Students', icon: Users, path: '/employee/dashboard/students' },
         { title: 'Classes', icon: GraduationCap, path: '/employee/dashboard/classes' },
-        { title: 'Grades', icon: Award, path: '/employee/dashboard/grades' }
+        { title: 'Grades', icon: Award, path: '/employee/dashboard/grades' },
+        { title: 'Subjects', icon: BookOpen, path: '/employee/dashboard/subjects' }
       ]
     }
   ];

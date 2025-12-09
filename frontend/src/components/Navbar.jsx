@@ -13,7 +13,7 @@ export default function SchoolLandingNavbar() {
   ];
 
   return (
-    <div className="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <div className="bg-gradient-to-br from-blue-50 to-indigo-100 ">
       {/* Top Header Bar */}
       <div className="bg-blue-600 text-white w-full fixed top-0 z-50">
         <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
