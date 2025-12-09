@@ -21,12 +21,12 @@ const routeRoleMapping = {
   "/employee/dashboard/inventory": ["stock_manager", "admin"],
 
   // Teacher routes
-  '/employee/dashboard/students': ['teacher', 'admin'],
-  '/employee/dashboard/classes': ['teacher', 'admin'],
-  '/employee/dashboard/grades': ['teacher', 'admin'],
-  '/employee/dashboard/trades': ['teacher', 'admin'],
-  '/employee/dashboard/subjects': ['teacher', 'admin'],
-  
+  "/employee/dashboard/students": ["teacher", "admin"],
+  "/employee/dashboard/classes": ["teacher", "admin"],
+  "/employee/dashboard/grades": ["teacher", "admin"],
+  "/employee/dashboard/trades": ["teacher", "admin"],
+  "/employee/dashboard/subjects": ["teacher", "admin"],
+
   // Shared routes (all authenticated employees)
   "/employee/dashboard": ["teacher", "admin", "stock_manager"],
   "/employee/dashboard/profile": ["teacher", "admin", "stock_manager"],
@@ -89,9 +89,9 @@ const PrivateEmployeeRoute = ({ children }) => {
   }
 
   // Check role permissions
-    if (!checkRolePermission()) {
-      return <Navigate to="/employee/dashboard" replace />;
-    }
+  if (!checkRolePermission()) {
+    return <Navigate to="/employee/dashboard" replace />;
+  }
 
   // All checks passed, render children
   return children;
