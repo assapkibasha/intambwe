@@ -11,6 +11,7 @@ import DepartmentDashboard from "../pages/dashboard/DepartmentPage";
 import EmployeeManagementDashboard from "../pages/dashboard/EmployeeManagement";
 import TradeManagementSystem from "../pages/dashboard/employee/trade/TradeManagementSystem";
 import StudentDashboard from "../pages/dashboard/StudentPage";
+import AssetRequestPage from "../pages/dashboard/employee/assets/AssetRequestPage";
 
 
 const LoadingSpinner = () => (
@@ -47,6 +48,7 @@ const router = createBrowserRouter([
                     { path: 'employees', element: <EmployeeManagementDashboard /> },
                     { path: 'trades', element: <TradeManagementSystem /> },
                     {path:'students' , element:<StudentDashboard />},
+                    {path:'request' , element:<AssetRequestPage />},
 
                 ],
             }
