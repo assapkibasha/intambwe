@@ -15,6 +15,10 @@ const subjectRoutes = require("./routes/subject/subjectRoutes");
 const timetableRoutes = require("./routes/timetable/timetableRoutes");
 const timetableEntryRoutes = require("./routes/timetableEntry/timetableEntryRoutes");
 const tradeRoutes = require("./routes/trade/tradeRoutes");
+const inventoryRoutes = require('./routes/inventoryRoutes');
+const inventoryRequestRoutes = require('./routes/inventoryRequestRoutes');
+const categoryRoutes = require('./routes/categoryRoutes');
+const stockRoutes = require('./routes/stockRoutes');
 
 const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
@@ -48,6 +52,10 @@ app.use("/api/subject", subjectRoutes);
 app.use("/api/timetable", timetableRoutes);
 app.use("/api/timetable-entry", timetableEntryRoutes);
 app.use("/api/trade", tradeRoutes);
+app.use('/api/inventory', inventoryRoutes);
+app.use('/api/inventory/requests', inventoryRequestRoutes);
+app.use('/api/inventory/categories', categoryRoutes);
+app.use('/api/inventory/stock', stockRoutes);
 
 /* ✅ Health check */
 app.get("/", (req, res) => {
@@ -64,16 +72,22 @@ app.use((err, req, res, next) => {
 });
 
 /* ✅ Start server */
+// Do not run `sync({ alter: true })` automatically in production-like environments.
+// Automatic schema alterations can generate many ALTER statements and cause
+// unexpected SQL errors (and is unsafe for production). Authenticate the DB
+// connection here and start the server. Use explicit migrations (sequelize-cli)
+// to change schemas when needed.
 db.sequelize
-  .sync({ alter: true })
+  .authenticate()
   .then(() => {
-    console.log("Database synchronized");
+    console.log("Database connection established. Skipping automatic schema sync.");
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
   })
   .catch((err) => {
     console.error("Unable to connect to database:", err);
+    process.exit(1);
   });
 
 module.exports = app;
