@@ -15,6 +15,7 @@ const InventoryItem = require("./InventoryItem");
 const InventoryRequest = require('./InventoryRequest');
 const Category = require('./Category');
 const StockTransaction = require('./StockTransaction');
+const SubjectTrade = require("./SubjectTrade");
 
 // Define Associations
 
@@ -79,6 +80,21 @@ Subject.belongsTo(Department, { foreignKey: "dpt_id" });
 Subject.hasMany(Marks, { foreignKey: "sbj_id", onDelete: "CASCADE" });
 Subject.hasMany(TimetableEntry, { foreignKey: "sbj_id", onDelete: "SET NULL" });
 Subject.hasMany(Attendance, { foreignKey: "subject_id", onDelete: "SET NULL" });
+
+// Subject–Trade many-to-many association through SubjectTrade
+Subject.belongsToMany(Trade, {
+  through: SubjectTrade,
+  foreignKey: "sbj_id",
+  otherKey: "trade_id",
+  as: "trades",
+});
+
+Trade.belongsToMany(Subject, {
+  through: SubjectTrade,
+  foreignKey: "trade_id",
+  otherKey: "sbj_id",
+  as: "subjects",
+});
 
 // Marks Associations
 Marks.belongsTo(Student, { foreignKey: "std_id" });
@@ -148,6 +164,7 @@ module.exports = {
   TimetableEntry,
   SpecialEvent,
   Attendance,
+  SubjectTrade,
   syncDatabase,
   Trade,
   Category,
