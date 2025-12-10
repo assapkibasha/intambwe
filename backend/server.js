@@ -19,6 +19,8 @@ const inventoryRoutes = require('./routes/inventoryRoutes');
 const inventoryRequestRoutes = require('./routes/inventoryRequestRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const stockRoutes = require('./routes/stockRoutes');
+const assetRequestRoutes = require('./routes/assetRequest/assetRequestRoutes');
+
 
 const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
@@ -55,6 +57,7 @@ app.use('/api/inventory', inventoryRoutes);
 app.use('/api/inventory/requests', inventoryRequestRoutes);
 app.use('/api/inventory/categories', categoryRoutes);
 app.use('/api/inventory/stock', stockRoutes);
+app.use('/api/assets/requests', assetRequestRoutes);
 
 /* ✅ Health check */
 app.get("/", (req, res) => {
