@@ -22,8 +22,10 @@ import classService from "../../../services/classService";
 import tradeService from "../../../services/tradeService";
 import departmentService from "../../../services/departmentService";
 import employeeService from "../../../services/employeeService";
+import { useNavigate } from "react-router-dom";
 
 const ClassManagementDashboard = () => {
+  const navigate = useNavigate();
   const [classes, setClasses] = useState([]);
   const [allClasses, setAllClasses] = useState([]);
   const [trades, setTrades] = useState([]);
@@ -178,8 +180,8 @@ const ClassManagementDashboard = () => {
   };
 
   const handleView = (cls) => {
-    setSelectedClass(cls);
-    setShowViewModal(true);
+    if (!cls || !cls.class_id) return;
+    navigate(`/employee/dashboard/classes/${cls.class_id}`);
   };
 
   const handleInputChange = (e) => {

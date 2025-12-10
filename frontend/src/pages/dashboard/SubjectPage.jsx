@@ -18,44 +18,12 @@ import {
   Eye,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import subjectService from '../../services/subjectService';
 import tradeService from '../../services/tradeService';
 import { useEmployeeAuth } from '../../contexts/EmployeeAuthContext';
 
-const Modal = ({ show, title, onClose, children }) => (
-  <AnimatePresence>
-    {show && (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 bg-gray-600 bg-opacity-75 flex items-center justify-center p-4"
-        onClick={onClose}
-      >
-        <motion.div
-          initial={{ y: -50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: -50, opacity: 0 }}
-          className="bg-white rounded-xl shadow-2xl w-full max-w-lg"
-          onClick={e => e.stopPropagation()}
-        >
-          <div className="flex justify-between items-center p-5 border-b border-gray-100">
-            <h3 className="text-xl font-semibold text-slate-900 flex items-center gap-2">
-              <BookOpen className="w-5 h-5 text-indigo-600" />
-              {title}
-            </h3>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition">
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-          <div className="p-6">
-            {children}
-          </div>
-        </motion.div>
-      </motion.div>
-    )}
-  </AnimatePresence>
-);
+// Local toast/modal animation support only; all CRUD flows use dedicated pages.
 
 const initialFormData = {
   sbj_name: '',
@@ -65,6 +33,8 @@ const initialFormData = {
 export default function SubjectPage() {
   const { employee } = useEmployeeAuth();
   const isAdmin = employee?.emp_role === 'admin';
+
+  const navigate = useNavigate();
 
   const [subjects, setSubjects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -78,17 +48,13 @@ export default function SubjectPage() {
   const [tradeSearch, setTradeSearch] = useState('');
   const [selectedTradeIds, setSelectedTradeIds] = useState([]);
 
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState(null);
-  const [deleteConfirm, setDeleteConfirm] = useState(null);
 
   const [formData, setFormData] = useState(initialFormData);
   const [formError, setFormError] = useState('');
   const [operationStatus, setOperationStatus] = useState(null);
   const [operationLoading, setOperationLoading] = useState(false);
-  const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const [detailsSubject, setDetailsSubject] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
 
   const showToast = (type, message, duration = 3000) => {
     setOperationStatus({ type, message });
@@ -218,28 +184,17 @@ export default function SubjectPage() {
   }, [searchTerm]);
 
   const handleAdd = () => {
-    setFormData(initialFormData);
-    setFormError('');
-    setSelectedSubject(null);
-    setSelectedTradeIds([]);
-    setShowAddModal(true);
+    navigate('/employee/dashboard/subjects/create');
   };
 
   const handleEdit = (subject) => {
-    setSelectedSubject(subject);
-    setFormData({
-      sbj_name: subject.sbj_name || '',
-      sbj_code: subject.sbj_code || '',
-    });
-    // For now we don't receive trade_ids from backend; leave selectedTradeIds empty.
-    setSelectedTradeIds([]);
-    setFormError('');
-    setShowUpdateModal(true);
+    if (!subject?.sbj_id) return;
+    navigate(`/employee/dashboard/subjects/${subject.sbj_id}/edit`);
   };
 
   const handleViewDetails = (subject) => {
-    setDetailsSubject(subject);
-    setShowDetailsModal(true);
+    if (!subject?.sbj_id) return;
+    navigate(`/employee/dashboard/subjects/${subject.sbj_id}`);
   };
 
   const RenderToast = () => {
@@ -288,167 +243,7 @@ export default function SubjectPage() {
     </div>
   );
 
-  const renderForm = (isUpdate) => (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      {formError && (
-        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-3 rounded">
-          <p className="text-sm font-medium">{formError}</p>
-        </div>
-      )}
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Subject Name <span className="text-red-500">*</span></label>
-          <input
-            type="text"
-            name="sbj_name"
-            value={formData.sbj_name}
-            onChange={handleInputChange}
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500"
-            required
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Subject Code <span className="text-red-500">*</span></label>
-          <input
-            type="text"
-            name="sbj_code"
-            value={formData.sbj_code}
-            onChange={handleInputChange}
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-indigo-500 focus:border-indigo-500"
-            required
-          />
-        </div>
-      </div>
-
-      {/* Trades multi-select */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Trades (optional, multi-select)</label>
-        <p className="text-xs text-gray-500 mb-2">Search and select one or more trades that can learn this subject.</p>
-
-        <div className="border border-gray-300 rounded-md p-3 space-y-2">
-          <div className="flex items-center gap-2 mb-2">
-            <Search className="w-4 h-4 text-gray-400" />
-            <input
-              type="text"
-              value={tradeSearch}
-              onChange={(e) => setTradeSearch(e.target.value)}
-              placeholder="Search trades by name..."
-              className="flex-1 border border-gray-200 rounded-md px-2 py-1 text-sm focus:ring-indigo-500 focus:border-indigo-500"
-            />
-            <button
-              type="button"
-              onClick={() => setSelectedTradeIds(trades.map(t => t.trade_id))}
-              className="text-xs px-2 py-1 rounded-md bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
-            >
-              Select all
-            </button>
-            <button
-              type="button"
-              onClick={() => setSelectedTradeIds([])}
-              className="text-xs px-2 py-1 rounded-md bg-gray-50 text-gray-600 hover:bg-gray-100"
-            >
-              Clear
-            </button>
-          </div>
-
-          <div className="max-h-40 overflow-y-auto space-y-1">
-            {trades
-              .filter(t =>
-                tradeSearch.trim()
-                  ? (t.trade_name || '').toLowerCase().includes(tradeSearch.toLowerCase())
-                  : true
-              )
-              .map(trade => {
-                const checked = selectedTradeIds.includes(trade.trade_id);
-                return (
-                  <label
-                    key={trade.trade_id}
-                    className={`flex items-center justify-between px-2 py-1 rounded-md text-sm cursor-pointer ${
-                      checked ? 'bg-indigo-50 text-indigo-700' : 'hover:bg-gray-50'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        className="h-4 w-4 text-indigo-600 border-gray-300 rounded"
-                        checked={checked}
-                        onChange={() => {
-                          setSelectedTradeIds(prev =>
-                            checked
-                              ? prev.filter(id => id !== trade.trade_id)
-                              : [...prev, trade.trade_id]
-                          );
-                        }}
-                      />
-                      <span>{trade.trade_name}</span>
-                    </div>
-                  </label>
-                );
-              })}
-
-            {trades.length === 0 && (
-              <p className="text-xs text-gray-400">No trades loaded. Ensure trade data exists.</p>
-            )}
-          </div>
-
-          {selectedTradeIds.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-2">
-              {trades
-                .filter(t => selectedTradeIds.includes(t.trade_id))
-                .map(t => (
-                  <span
-                    key={t.trade_id}
-                    className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-indigo-100 text-indigo-700"
-                  >
-                    {t.trade_name}
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setSelectedTradeIds(prev => prev.filter(id => id !== t.trade_id))
-                      }
-                      className="ml-1 text-indigo-500 hover:text-indigo-700"
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="pt-4 flex justify-end gap-3">
-        <button
-          type="button"
-          onClick={() => {
-            setShowAddModal(false);
-            setShowUpdateModal(false);
-            setFormData(initialFormData);
-            setFormError('');
-          }}
-          className="px-4 py-2 text-sm font-medium rounded-md text-gray-700 bg-gray-100 hover:bg-gray-200 transition"
-          disabled={operationLoading}
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          className="inline-flex justify-center items-center px-4 py-2 text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-          disabled={operationLoading}
-        >
-          {operationLoading ? (
-            <>
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-              {isUpdate ? 'Updating...' : 'Adding...'}
-            </>
-          ) : (
-            isUpdate ? 'Save Changes' : 'Add Subject'
-          )}
-        </button>
-      </div>
-    </form>
-  );
+  // Form rendering moved to dedicated pages; keep this component list-only.
 
   return (
     <div className="min-h-screen bg-slate-50 py-6 px-4">
@@ -598,107 +393,66 @@ export default function SubjectPage() {
         </div>
       </div>
 
-      <Modal
-        show={showAddModal}
-        title="Add New Subject"
-        onClose={() => {
-          setShowAddModal(false);
-          setFormData(initialFormData);
-          setFormError('');
-        }}
-      >
-        {renderForm(false)}
-      </Modal>
-
-      <Modal
-        show={showUpdateModal}
-        title={selectedSubject ? `Edit Subject: ${selectedSubject.sbj_name}` : 'Edit Subject'}
-        onClose={() => {
-          setShowUpdateModal(false);
-          setFormData(initialFormData);
-          setFormError('');
-          setSelectedSubject(null);
-        }}
-      >
-        {renderForm(true)}
-      </Modal>
-
-      {/* Details Modal (admin) */}
-      <Modal
-        show={isAdmin && showDetailsModal && !!detailsSubject}
-        title={detailsSubject ? `Subject Details: ${detailsSubject.sbj_name}` : 'Subject Details'}
-        onClose={() => {
-          setShowDetailsModal(false);
-          setDetailsSubject(null);
-        }}
-      >
-        {detailsSubject && (
-          <div className="space-y-4 text-sm text-slate-700">
-            <div>
-              <h4 className="font-semibold text-slate-900 mb-1">Basic Information</h4>
-              <p><span className="font-medium">ID:</span> {String(detailsSubject.sbj_id).padStart(4, '0')}</p>
-              <p><span className="font-medium">Name:</span> {detailsSubject.sbj_name}</p>
-              <p><span className="font-medium">Code:</span> {detailsSubject.sbj_code}</p>
-            </div>
-
-            <div>
-              <h4 className="font-semibold text-slate-900 mb-1">Trades Learning This Subject</h4>
-              {Array.isArray(detailsSubject.trades) && detailsSubject.trades.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
-                  {detailsSubject.trades.map(trade => (
-                    <span
-                      key={trade.trade_id}
-                      className="inline-flex items-center px-2 py-0.5 rounded-full text-xs bg-indigo-100 text-indigo-700"
+      {/* Confirm Deletion Modal (still inline) */}
+      <AnimatePresence>
+        {deleteConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-gray-600 bg-opacity-75 flex items-center justify-center p-4"
+            onClick={() => setDeleteConfirm(null)}
+          >
+            <motion.div
+              initial={{ y: -50, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: -50, opacity: 0 }}
+              className="bg-white rounded-xl shadow-2xl w-full max-w-md"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-between items-center p-5 border-b border-gray-100">
+                <h3 className="text-xl font-semibold text-slate-900 flex items-center gap-2">
+                  <Trash2 className="w-5 h-5 text-red-500" />
+                  Confirm Deletion
+                </h3>
+                <button
+                  onClick={() => setDeleteConfirm(null)}
+                  className="text-gray-400 hover:text-gray-600 transition"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="p-6">
+                <div className="text-center">
+                  <Trash2 className="w-10 h-10 text-red-500 mx-auto mb-4" />
+                  <h4 className="text-lg font-semibold text-slate-900 mb-2">
+                    Are you sure you want to delete this subject?
+                  </h4>
+                  <p className="text-sm text-slate-500 mb-6">
+                    This action cannot be undone.
+                  </p>
+                  <div className="flex justify-center space-x-4">
+                    <button
+                      onClick={() => setDeleteConfirm(null)}
+                      className="px-4 py-2 text-sm font-medium rounded-md text-gray-700 bg-gray-100 hover:bg-gray-200 transition"
+                      disabled={operationLoading}
                     >
-                      {trade.trade_name}
-                    </span>
-                  ))}
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => deleteConfirm && handleDelete(deleteConfirm)}
+                      className="inline-flex justify-center items-center px-4 py-2 text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 transition disabled:opacity-50"
+                      disabled={operationLoading}
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
-              ) : (
-                <p className="text-xs text-gray-500">No trades have been linked to this subject yet.</p>
-              )}
-            </div>
-
-            <div className="text-xs text-gray-400 border-t pt-2">
-              Full Detailed info on this subject can be found in the subject management section.
-            </div>
-          </div>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
-      </Modal>
-
-      <Modal
-        show={!!deleteConfirm}
-        title="Confirm Deletion"
-        onClose={() => setDeleteConfirm(null)}
-      >
-        <div className="text-center">
-          <Trash2 className="w-10 h-10 text-red-500 mx-auto mb-4" />
-          <h4 className="text-lg font-semibold text-slate-900 mb-2">
-            Are you sure you want to delete this subject?
-          </h4>
-          <p className="text-sm text-slate-500 mb-6">
-            This action cannot be undone.
-          </p>
-          <div className="flex justify-center space-x-4">
-            <button
-              onClick={() => setDeleteConfirm(null)}
-              className="px-4 py-2 text-sm font-medium rounded-md text-gray-700 bg-gray-100 hover:bg-gray-200 transition"
-              disabled={operationLoading}
-            >
-              Cancel
-            </button>
-            <button
-              onClick={() => deleteConfirm && handleDelete(deleteConfirm)}
-              className="inline-flex justify-center items-center px-4 py-2 text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 transition disabled:opacity-50"
-              disabled={operationLoading}
-            >
-              {operationLoading ? (
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              ) : 'Delete'}
-            </button>
-          </div>
-        </div>
-      </Modal>
+      </AnimatePresence>
 
       <RenderToast />
     </div>

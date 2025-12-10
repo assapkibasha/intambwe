@@ -1,4 +1,4 @@
-const { Subject, Department, Class, Employee, Trade, SubjectTrade } = require('../../model');
+const { Subject, Department, Class, Employee, Trade, SubjectTrade, ClassSubject } = require('../../model');
 const { Op } = require('sequelize');
 const subjectValidator = require('../../validators/subjectValidator');
 
@@ -158,9 +158,32 @@ const subjectController = {
         });
       }
 
+      // Fetch all class assignments (many classes + many teachers per subject)
+      const classAssignments = await ClassSubject.findAll({
+        where: { sbj_id: id },
+        include: [
+          {
+            model: Class,
+            include: [
+              { model: Department },
+              { model: Trade, as: 'Trade' },
+              { model: Employee, as: 'classTeacher' },
+            ],
+          },
+          {
+            model: Employee,
+            as: 'assignedTeacher',
+            attributes: ['emp_id', 'emp_name', 'emp_email'],
+          },
+        ],
+      });
+
+      const payload = subject.toJSON();
+      payload.classAssignments = classAssignments;
+
       return res.status(200).json({
         success: true,
-        data: subject
+        data: payload,
       });
     } catch (error) {
       console.error('Error fetching subject:', error);

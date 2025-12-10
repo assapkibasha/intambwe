@@ -149,6 +149,7 @@ const classController = {
         include: [
           { model: Department },
           { model: Employee, as: "classTeacher" },
+          { model: Trade, as: "Trade" },
         ],
       });
 

@@ -13,9 +13,14 @@ import TradeManagementSystem from "../pages/dashboard/employee/trade/TradeManage
 
 import StudentManagementDashboard from "../pages/dashboard/StudentManagementDashboard";
 import ClassManagementDashboard from "../pages/dashboard/class/ClassManagement";
+import ClassDetailsPage from "../pages/dashboard/class/ClassDetailsPage";
 import StudentDashboard from "../pages/dashboard/StudentPage";
 import SubjectPage from "../pages/dashboard/SubjectPage";
+import SubjectCreatePage from "../pages/dashboard/subjects/SubjectCreatePage";
+import SubjectEditPage from "../pages/dashboard/subjects/SubjectEditPage";
+import SubjectDetailsPage from "../pages/dashboard/subjects/SubjectDetailsPage";
 import AssignClassSubjectsPage from "../pages/dashboard/AssignClassSubjectsPage";
+import AssignedClassSubjectsDetailPage from "../pages/dashboard/AssignedClassSubjectsDetailPage";
 import NotFound from "../pages/NotFound";
 import MySubjectsPage from "../pages/dashboard/teacher/MySubjectsPage";
 
@@ -63,8 +68,13 @@ const router = createBrowserRouter([
           { path: "trades", element: <TradeManagementSystem /> },
           { path: "students", element: <StudentManagementDashboard /> },
           { path: "classes", element: <ClassManagementDashboard /> },
+          { path: "classes/:classId", element: <ClassDetailsPage /> },
           { path: "subjects", element: <SubjectPage /> },
+          { path: "subjects/create", element: <SubjectCreatePage /> },
+          { path: "subjects/:subjectId", element: <SubjectDetailsPage /> },
+          { path: "subjects/:subjectId/edit", element: <SubjectEditPage /> },
           { path: "assign-class-subjects", element: <AssignClassSubjectsPage /> },
+          { path: "assign-class-subjects/:classId", element: <AssignedClassSubjectsDetailPage /> },
           { path: "my-subjects", element: <MySubjectsPage /> },
         ],
       },
