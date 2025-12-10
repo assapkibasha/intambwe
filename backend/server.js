@@ -16,10 +16,14 @@ const timetableRoutes = require("./routes/timetable/timetableRoutes");
 const timetableEntryRoutes = require("./routes/timetableEntry/timetableEntryRoutes");
 const tradeRoutes = require("./routes/trade/tradeRoutes");
 const inventoryRoutes = require('./routes/inventoryRoutes');
-const inventoryRequestRoutes = require('./routes/inventoryRequestRoutes');
+const itemRequestRoutes = require('./routes/itemRequest/itemRequestRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const stockRoutes = require('./routes/stockRoutes');
-const assetRequestRoutes = require('./routes/assetRequest/assetRequestRoutes');
+const supplierRoutes = require('./routes/supplier/supplierRoutes');
+const inventoryLocationRoutes = require('./routes/inventoryLocation/inventoryLocationRoutes');
+const purchaseOrderRoutes = require('./routes/purchaseOrder/purchaseOrderRoutes');
+const stockAdjustmentRoutes = require('./routes/stockAdjustment/stockAdjustmentRoutes');
+const inventoryReportRoutes = require('./routes/inventoryReport/inventoryReportRoutes');
 
 
 const cookieParser = require("cookie-parser");
@@ -54,10 +58,14 @@ app.use("/api/timetable", timetableRoutes);
 app.use("/api/timetable-entry", timetableEntryRoutes);
 app.use("/api/trade", tradeRoutes);
 app.use('/api/inventory', inventoryRoutes);
-app.use('/api/inventory/requests', inventoryRequestRoutes);
+app.use('/api/item-requests', itemRequestRoutes);
 app.use('/api/inventory/categories', categoryRoutes);
 app.use('/api/inventory/stock', stockRoutes);
-app.use('/api/assets/requests', assetRequestRoutes);
+app.use('/api/inventory/suppliers', supplierRoutes);
+app.use('/api/inventory/locations', inventoryLocationRoutes);
+app.use('/api/inventory/purchase-orders', purchaseOrderRoutes);
+app.use('/api/inventory/adjustments', stockAdjustmentRoutes);
+app.use('/api/inventory/reports', inventoryReportRoutes);
 
 /* ✅ Health check */
 app.get("/", (req, res) => {
@@ -73,12 +81,6 @@ app.use((err, req, res, next) => {
   });
 });
 
-/* ✅ Start server */
-// Do not run `sync({ alter: true })` automatically in production-like environments.
-// Automatic schema alterations can generate many ALTER statements and cause
-// unexpected SQL errors (and is unsafe for production). Authenticate the DB
-// connection here and start the server. Use explicit migrations (sequelize-cli)
-// to change schemas when needed.
 db.sequelize
   .authenticate()
   .then(() => {

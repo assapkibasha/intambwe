@@ -18,7 +18,16 @@ const routeRoleMapping = {
   "/employee/dashboard/stockin": ["stock_manager", "admin"],
   "/employee/dashboard/category": ["stock_manager", "admin"],
   "/employee/dashboard/product": ["stock_manager", "admin"],
+  
+  // Inventory routes (Stock Manager)
   "/employee/dashboard/inventory": ["stock_manager", "admin"],
+  "/employee/dashboard/inventory/products": ["stock_manager", "admin"],
+  "/employee/dashboard/inventory/categories": ["stock_manager", "admin"],
+  "/employee/dashboard/inventory/suppliers": ["stock_manager", "admin"],
+  "/employee/dashboard/inventory/purchase-orders": ["stock_manager", "admin"],
+  "/employee/dashboard/inventory/reports": ["stock_manager", "admin"],
+  "/employee/dashboard/inventory/stock-in": ["stock_manager", "admin"],
+  "/employee/dashboard/inventory/stock-out": ["stock_manager", "admin"],
 
   // Teacher routes
   "/employee/dashboard/students": ["teacher", "admin"],

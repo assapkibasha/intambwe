@@ -15,6 +15,10 @@ import StockOut from "../pages/dashboard/inventory/StockOut";
 import DepartmentDashboard from "../pages/dashboard/DepartmentPage";
 import EmployeeManagementDashboard from "../pages/dashboard/EmployeeManagement";
 import TradeManagementSystem from "../pages/dashboard/employee/trade/TradeManagementSystem";
+import InventoryDashboard from "../pages/InventoryDashboard";
+import SupplierManagement from "../pages/SupplierManagement";
+import PurchaseOrders from "../pages/PurchaseOrders";
+import InventoryReports from "../pages/InventoryReports";
 
 import StudentManagementDashboard from "../pages/dashboard/StudentManagementDashboard";
 import ClassManagementDashboard from "../pages/dashboard/class/ClassManagement";
@@ -68,6 +72,20 @@ const router = createBrowserRouter([
             path: "classes",
             element: <ClassManagementDashboard />,
           },
+          {
+            path: "inventory",
+            element: <Outlet />,
+            children: [
+              { index: true, element: <InventoryDashboard /> },
+              { path: "products", element: <InventoryDashboard /> },
+              { path: "categories", element: <Categories /> },
+              { path: "suppliers", element: <SupplierManagement /> },
+              { path: "purchase-orders", element: <PurchaseOrders /> },
+              { path: "reports", element: <InventoryReports /> },
+              { path: "stock-in", element: <StockIn /> },
+              { path: "stock-out", element: <StockOut /> }
+            ]
+          }
         ],
       },
     ],

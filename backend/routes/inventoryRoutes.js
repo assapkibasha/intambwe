@@ -6,6 +6,9 @@ const { authenticateToken, authorizeRoles } = require('../middleware/employeeAut
 
 // Public listing
 router.get('/', authenticateToken, inventoryController.listItems);
+router.get('/stats/overview', authenticateToken, inventoryController.getInventoryStats);
+router.get('/low-stock/items', authenticateToken, inventoryController.getLowStockItems);
+router.get('/expired/items', authenticateToken, inventoryController.getExpiredItems);
 router.get('/:id', authenticateToken, inventoryController.getItem);
 
 // Admin or stock_manager can create/update/delete

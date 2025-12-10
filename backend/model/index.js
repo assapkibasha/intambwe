@@ -12,10 +12,17 @@ const SpecialEvent = require("./SpecialEvent");
 const Attendance = require("./Attendance");
 const Trade = require("./Trade");
 const InventoryItem = require("./InventoryItem");
-const InventoryRequest = require('./InventoryRequest');
+const ItemRequest = require('./ItemRequest');
 const Category = require('./Category');
 const StockTransaction = require('./StockTransaction');
 const SubjectTrade = require("./SubjectTrade");
+const Supplier = require("./Supplier");
+const InventoryLocation = require("./InventoryLocation");
+const ItemLocation = require("./ItemLocation");
+const PurchaseOrder = require("./PurchaseOrder");
+const PurchaseOrderItem = require("./PurchaseOrderItem");
+const StockAdjustment = require("./StockAdjustment");
+const InventoryReport = require("./InventoryReport");
 
 // Define Associations
 
@@ -126,14 +133,46 @@ Attendance.belongsTo(Subject, { foreignKey: "subject_id" });
 // Inventory Associations
 InventoryItem.belongsTo(Employee, { foreignKey: 'added_by', as: 'addedBy' });
 InventoryItem.belongsTo(Category, { foreignKey: 'category_id', as: 'category' });
-// Requests
-InventoryRequest.belongsTo(InventoryItem, { foreignKey: 'item_id', as: 'item' });
-InventoryRequest.belongsTo(Employee, { foreignKey: 'requester_id', as: 'requester' });
-InventoryRequest.belongsTo(Employee, { foreignKey: 'approved_by', as: 'approver' });
+InventoryItem.belongsTo(Supplier, { foreignKey: 'supplier_id' });
+InventoryItem.hasMany(ItemLocation, { foreignKey: 'item_id', onDelete: 'CASCADE' });
+InventoryItem.hasMany(StockAdjustment, { foreignKey: 'item_id', onDelete: 'CASCADE' });
+
+// Item Request Associations
+ItemRequest.belongsTo(InventoryItem, { foreignKey: 'item_id', as: 'item' });
+ItemRequest.belongsTo(Employee, { foreignKey: 'requester_id', as: 'requester' });
+ItemRequest.belongsTo(Employee, { foreignKey: 'approved_by', as: 'approver' });
 
 // Stock transactions
 StockTransaction.belongsTo(InventoryItem, { foreignKey: 'item_id', as: 'item' });
 StockTransaction.belongsTo(Employee, { foreignKey: 'performed_by', as: 'performedBy' });
+
+// Supplier Associations
+Supplier.hasMany(InventoryItem, { foreignKey: 'supplier_id', onDelete: 'SET NULL' });
+Supplier.hasMany(PurchaseOrder, { foreignKey: 'supplier_id', onDelete: 'CASCADE' });
+Supplier.belongsTo(Employee, { foreignKey: 'created_by', as: 'createdBy' });
+
+// InventoryLocation Associations
+InventoryLocation.hasMany(ItemLocation, { foreignKey: 'location_id', onDelete: 'CASCADE' });
+
+// ItemLocation Associations
+ItemLocation.belongsTo(InventoryItem, { foreignKey: 'item_id' });
+ItemLocation.belongsTo(InventoryLocation, { foreignKey: 'location_id' });
+
+// PurchaseOrder Associations
+PurchaseOrder.belongsTo(Supplier, { foreignKey: 'supplier_id' });
+PurchaseOrder.hasMany(PurchaseOrderItem, { foreignKey: 'po_id', onDelete: 'CASCADE' });
+PurchaseOrder.belongsTo(Employee, { foreignKey: 'created_by', as: 'createdBy' });
+
+// PurchaseOrderItem Associations
+PurchaseOrderItem.belongsTo(PurchaseOrder, { foreignKey: 'po_id' });
+PurchaseOrderItem.belongsTo(InventoryItem, { foreignKey: 'item_id' });
+
+// StockAdjustment Associations
+StockAdjustment.belongsTo(InventoryItem, { foreignKey: 'item_id' });
+StockAdjustment.belongsTo(Employee, { foreignKey: 'adjusted_by', as: 'adjustedBy' });
+
+// InventoryReport Associations
+InventoryReport.belongsTo(Employee, { foreignKey: 'generated_by', as: 'generatedBy' });
 
 // expose in exports
 
@@ -170,5 +209,12 @@ module.exports = {
   Category,
   StockTransaction,
   InventoryItem,
-  InventoryRequest,
+  ItemRequest,
+  Supplier,
+  InventoryLocation,
+  ItemLocation,
+  PurchaseOrder,
+  PurchaseOrderItem,
+  StockAdjustment,
+  InventoryReport,
 };

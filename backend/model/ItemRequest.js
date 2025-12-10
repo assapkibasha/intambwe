@@ -1,55 +1,71 @@
-// models/InventoryRequest.js
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
-const InventoryRequest = sequelize.define('InventoryRequest', {
+const ItemRequest = sequelize.define('ItemRequest', {
   request_id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
     autoIncrement: true,
   },
+  // The item being requested
   item_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: { model: 'InventoryItem', key: 'item_id' }
   },
+  // The employee who made the request
   requester_id: {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: { model: 'Employee', key: 'emp_id' }
   },
+  // Quantity requested
   quantity_requested: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    defaultValue: 1,
+    validate: { min: 1 }
   },
+  // Quantity actually approved
   quantity_approved: {
     type: DataTypes.INTEGER,
     allowNull: true,
   },
-  status: {
-    type: DataTypes.ENUM('pending','approved','rejected'),
-    allowNull: false,
-    defaultValue: 'pending'
-  },
+  // Reason/justification for the request
   reason: {
     type: DataTypes.TEXT,
     allowNull: true
   },
+  // Request status: pending, approved, rejected, confirmed
+  status: {
+    type: DataTypes.ENUM('pending', 'approved', 'rejected', 'confirmed'),
+    allowNull: false,
+    defaultValue: 'pending'
+  },
+  // The employee who approved/rejected the request
   approved_by: {
     type: DataTypes.INTEGER,
     allowNull: true,
     references: { model: 'Employee', key: 'emp_id' }
   },
+  // When the request was approved/rejected
   approved_at: {
     type: DataTypes.DATE,
     allowNull: true
+  },
+  // When it was confirmed/fulfilled
+  confirmed_at: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  // Notes from approver
+  approval_notes: {
+    type: DataTypes.TEXT,
+    allowNull: true
   }
 }, {
-  tableName: 'InventoryRequest',
+  tableName: 'ItemRequest',
   timestamps: true,
-  createdAt: 'created_at',
-  updatedAt: 'updated_at'
+  underscored: true
 });
 
-module.exports = InventoryRequest;
+module.exports = ItemRequest;

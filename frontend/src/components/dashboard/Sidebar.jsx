@@ -54,10 +54,13 @@ const Sidebar = ({ isOpen, onClose }) => {
       icon: Package,
       roles: ['stock_manager', 'admin'],
       color: 'from-orange-500 to-red-500',
-        children: [
+      children: [
         { title: 'Products', icon: Package, path: '/employee/dashboard/inventory/products' },
         { title: 'Categories', icon: FolderTree, path: '/employee/dashboard/inventory/categories' },
         { title: 'Inventory', icon: Archive, path: '/employee/dashboard/inventory' },
+        { title: 'Suppliers', icon: Users, path: '/employee/dashboard/inventory/suppliers' },
+        { title: 'Purchase Orders', icon: ShoppingCart, path: '/employee/dashboard/inventory/purchase-orders' },
+        { title: 'Reports', icon: BarChart3, path: '/employee/dashboard/inventory/reports' },
         { title: 'Stock In', icon: TrendingDown, path: '/employee/dashboard/inventory/stock-in' },
         { title: 'Stock Out', icon: ShoppingCart, path: '/employee/dashboard/inventory/stock-out' }
       ]
