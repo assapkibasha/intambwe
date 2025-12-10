@@ -1,4 +1,3 @@
-
 // models/Attendance.js
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
@@ -25,12 +24,12 @@ const Attendance = sequelize.define('Attendance', {
       key: 'class_id'
     }
   },
-  subject_id: {
+  emp_id: {
     type: DataTypes.INTEGER,
     allowNull: true,
     references: {
-      model: 'Subject',
-      key: 'sbj_id'
+      model: 'Employee',
+      key: 'emp_id'
     }
   },
   date: {
@@ -39,32 +38,59 @@ const Attendance = sequelize.define('Attendance', {
   },
   time_in: {
     type: DataTypes.TIME,
-    allowNull: true
+    allowNull: false
   },
   time_out: {
     type: DataTypes.TIME,
     allowNull: true
   },
   status: {
-    type: DataTypes.ENUM('PRESENT', 'ABSENT', 'LATE'),
+    type: DataTypes.ENUM('present', 'absent', 'late'),
     allowNull: false,
-    defaultValue: 'ABSENT'
+    defaultValue: 'present'
   },
   method: {
-    type: DataTypes.ENUM('QR', 'RFID', 'FACE'),
-    allowNull: true
+    type: DataTypes.ENUM('QR', 'RFID', 'manual'),
+    allowNull: false,
+    defaultValue: 'manual'
   },
   created_at: {
     type: DataTypes.DATE,
+    allowNull: false,
     defaultValue: DataTypes.NOW
   },
   updated_at: {
     type: DataTypes.DATE,
+    allowNull: false,
     defaultValue: DataTypes.NOW
   }
 }, {
   tableName: 'Attendance',
   timestamps: true,
+  createdAt: 'created_at',
+  updatedAt: 'updated_at',
+  indexes: [
+    {
+      name: 'idx_attendance_student',
+      fields: ['student_id']
+    },
+    {
+      name: 'idx_attendance_class',
+      fields: ['class_id']
+    },
+    {
+      name: 'idx_attendance_date',
+      fields: ['date']
+    },
+    {
+      name: 'idx_attendance_student_date',
+      fields: ['student_id', 'date']
+    },
+    {
+      name: 'idx_attendance_status',
+      fields: ['status']
+    }
+  ]
 });
 
 module.exports = Attendance;

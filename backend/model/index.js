@@ -42,6 +42,8 @@ Employee.hasMany(SpecialEvent, {
   foreignKey: "teacher_id",
   onDelete: "SET NULL",
 });
+Employee.hasMany(Attendance, { foreignKey: "emp_id", onDelete: "SET NULL" });
+
 
 // Class Associations
 Class.belongsTo(Department, { foreignKey: "dpt_id" });
@@ -75,7 +77,7 @@ Subject.belongsTo(Class, { foreignKey: "class_id" });
 Subject.belongsTo(Department, { foreignKey: "dpt_id" });
 Subject.hasMany(Marks, { foreignKey: "sbj_id", onDelete: "CASCADE" });
 Subject.hasMany(TimetableEntry, { foreignKey: "sbj_id", onDelete: "SET NULL" });
-Subject.hasMany(Attendance, { foreignKey: "subject_id", onDelete: "SET NULL" });
+
 
 // Subject–Trade many-to-many association through SubjectTrade
 Subject.belongsToMany(Trade, {
@@ -115,9 +117,12 @@ SpecialEvent.belongsTo(Class, { foreignKey: "class_id" });
 SpecialEvent.belongsTo(Employee, { foreignKey: "teacher_id", as: "teacher" });
 
 // Attendance Associations
-Attendance.belongsTo(Student, { foreignKey: "student_id" });
-Attendance.belongsTo(Class, { foreignKey: "class_id" });
-Attendance.belongsTo(Subject, { foreignKey: "subject_id" });
+// Attendance Associations (add these to your existing models/index.js)
+Attendance.belongsTo(Student, { foreignKey: "student_id", as: "student" });
+Attendance.belongsTo(Class, { foreignKey: "class_id", as: "class" });
+Attendance.belongsTo(Employee, { foreignKey: "emp_id", as: "recordedBy" });
+
+
 
 // Sync database
 const syncDatabase = async () => {

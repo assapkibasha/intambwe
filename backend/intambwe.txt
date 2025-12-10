@@ -1,0 +1,27 @@
+PORT=3000
+
+# databse conntection
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=nigga
+DB_PORT=3307
+DB_NAME=attendance_db
+
+
+# access token 
+
+JWT_SECRET=your-super-secret-jwt-key-change-this-in-production 
+JWT_EXPIRES_IN=15h
+
+
+# refresh token
+
+JWT_REFRESH_SECRET=your-super-secret-jwt-key-change-this-in-production
+JWT_REFRESH_EXPIRES_IN=7d
+
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USER=intambwesystem@gmail.com
+EMAIL_PASSWORD=yoytmooelrmnnuen
+EMAIL_FROM_NAME="Intambwe"
+FRONTEND_URL=http://localhost:5173

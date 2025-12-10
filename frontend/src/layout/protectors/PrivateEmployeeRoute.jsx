@@ -10,7 +10,6 @@ const routeRoleMapping = {
   "/employee/dashboard/employees": ["admin"],
   "/employee/dashboard/department": ["admin"],
   "/employee/dashboard/settings": ["admin"],
-
   // Stock Manager routes
   "/employee/dashboard/stockout": ["stock_manager", "admin"],
   "/employee/dashboard/sales-report": ["stock_manager", "admin"],
@@ -19,23 +18,29 @@ const routeRoleMapping = {
   "/employee/dashboard/category": ["stock_manager", "admin"],
   "/employee/dashboard/product": ["stock_manager", "admin"],
   "/employee/dashboard/inventory": ["stock_manager", "admin"],
-
   // Teacher routes
   "/employee/dashboard/students": ["teacher", "admin"],
   "/employee/dashboard/classes": ["teacher", "admin"],
   "/employee/dashboard/grades": ["teacher", "admin"],
   "/employee/dashboard/trades": ["teacher", "admin"],
   "/employee/dashboard/subjects": ["teacher", "admin"],
-
   // Shared routes (all authenticated employees)
   "/employee/dashboard": ["teacher", "admin", "stock_manager"],
   "/employee/dashboard/profile": ["teacher", "admin", "stock_manager"],
 };
 
 export const hasAccess = (route, userRole) => {
-  const allowedRoles = routeRoleMapping[route];
-  return allowedRoles && allowedRoles.includes(userRole);
+  for (const baseRoute in routeRoleMapping) {
+    // If the route starts with the base route (prefix match)
+    if (route.startsWith(baseRoute)) {
+      const allowedRoles = routeRoleMapping[baseRoute];
+      return allowedRoles.includes(userRole);
+    }
+  }
+
+  return false; // Default deny
 };
+
 
 const PrivateEmployeeRoute = ({ children }) => {
   const { employee, isAuthenticated, loading } = useEmployeeAuth();
@@ -45,10 +50,19 @@ const PrivateEmployeeRoute = ({ children }) => {
   const checkRolePermission = () => {
     const currentPath = location.pathname;
 
-    // Find if current path matches any protected route
-    const matchedRoute = Object.keys(routeRoleMapping).find(
-      (route) => currentPath === route || currentPath.startsWith(route)
-    );
+    // Find the parent route by checking if current path starts with any defined route
+    const matchedRoute = Object.keys(routeRoleMapping).find((route) => {
+      // Exact match
+      if (currentPath === route) {
+        return true;
+      }
+      // Check if current path is a child of this route
+      // e.g., /employee/dashboard/students/create starts with /employee/dashboard/students
+      if (currentPath.startsWith(route + "/")) {
+        return true;
+      }
+      return false;
+    });
 
     // Route doesn't require specific role permission, allow access
     if (!matchedRoute) {
