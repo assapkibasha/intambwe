@@ -83,17 +83,14 @@ Subject.belongsTo(Class, { foreignKey: "class_id" });
 Subject.belongsTo(Department, { foreignKey: "dpt_id" });
 Subject.hasMany(Marks, { foreignKey: "sbj_id", onDelete: "CASCADE" });
 Subject.hasMany(TimetableEntry, { foreignKey: "sbj_id", onDelete: "SET NULL" });
-<<<<<<< HEAD
 
-=======
-Subject.hasMany(Attendance, { foreignKey: "subject_id", onDelete: "SET NULL" });
+
 Subject.hasMany(ClassSubject, { foreignKey: "sbj_id", onDelete: "CASCADE" });
 
 // ClassSubject Associations
 ClassSubject.belongsTo(Class, { foreignKey: "class_id" });
 ClassSubject.belongsTo(Subject, { foreignKey: "sbj_id" });
 ClassSubject.belongsTo(Employee, { foreignKey: "teacher_id", as: "assignedTeacher" });
->>>>>>> a7dadf0 (created  notfound page,landing page, logout redirection to login, subject-assignment modification)
 
 // Subject–Trade many-to-many association through SubjectTrade
 Subject.belongsToMany(Trade, {
@@ -184,12 +181,5 @@ module.exports = {
   SubjectTrade,
   syncDatabase,
   Trade,
-<<<<<<< HEAD
-  Category,
-  StockTransaction,
-  InventoryItem,
-  InventoryRequest,
-=======
   ClassSubject,
->>>>>>> a7dadf0 (created  notfound page,landing page, logout redirection to login, subject-assignment modification)
 };

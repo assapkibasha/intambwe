@@ -18,10 +18,11 @@ import TradeManagementSystem from "../pages/dashboard/employee/trade/TradeManage
 
 import StudentManagementDashboard from "../pages/dashboard/StudentManagementDashboard";
 import ClassManagementDashboard from "../pages/dashboard/class/ClassManagement";
-import StudentDashboard from "../pages/dashboard/StudentPage";
+
 import SubjectPage from "../pages/dashboard/SubjectPage";
 import AssignClassSubjectsPage from "../pages/dashboard/AssignClassSubjectsPage";
 import NotFound from "../pages/NotFound";
+import AttendanceMarkingPage from "../pages/dashboard/AttendanceMarkingPage";
 
 const LoadingSpinner = () => (
   <div className="loading-spinner">
@@ -71,6 +72,7 @@ const router = createBrowserRouter([
           { path: "classes", element: <ClassManagementDashboard /> },
           { path: "subjects", element: <SubjectPage /> },
           { path: "assign-class-subjects", element: <AssignClassSubjectsPage /> },
+          { path: "attendance", element: <AttendanceMarkingPage /> },
         ],
       },
       // Any unknown /employee/... path (including unknown dashboard URLs) should render
