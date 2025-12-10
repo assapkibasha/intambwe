@@ -64,7 +64,7 @@ const router = createBrowserRouter([
           { path: "trades", element: <TradeManagementSystem /> },
           { path: "students", element: <StudentManagementDashboard /> },
           { path: "students/create", element: <StudentRegistrationForm /> },
-          { path: "students/view/:id", element: <StudentViewPage />
+          { path: "students/view/:id", element: <StudentViewPage /> },
           { path: "classes", element: <ClassManagementDashboard /> },
           { path: "subjects", element: <SubjectPage /> },
           { path: "assign-class-subjects", element: <AssignClassSubjectsPage /> },
