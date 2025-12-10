@@ -25,7 +25,6 @@ const categoryRoutes = require('./routes/categoryRoutes');
 const stockRoutes = require('./routes/stockRoutes');
 const assetRequestRoutes = require('./routes/assetRequest/assetRequestRoutes');
 
-
 // ✅ Correct path for assessment route
 const assessmentRoutes = require("./routes/marks/marksRoutes");
 

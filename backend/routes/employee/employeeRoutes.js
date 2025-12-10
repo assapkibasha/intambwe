@@ -3,8 +3,7 @@ const express = require('express');
 const router = express.Router();
 const employeeController = require('../../controllers/employee/employeeController');
 const { authenticateToken, authorizeOwnerOrAdmin, authorizeRoles } = require('../../middleware/employeeAuth');
-const employeeController = require('../../../controllers/employee/employeeController');
-const { authenticateToken, authorizeOwnerOrAdmin, authorizeRoles } = require('../../../middleware/employeeAuth');
+const classSubjectController = require('../../controllers/class/classSubjectController');
 
 const classSubjectController = require('../../controllers/class/classSubjectController');
 

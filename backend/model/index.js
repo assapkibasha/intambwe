@@ -137,20 +137,6 @@ Attendance.belongsTo(Employee, { foreignKey: "emp_id", as: "recordedBy" });
 
 
 
-// Inventory Associations
-InventoryItem.belongsTo(Employee, { foreignKey: 'added_by', as: 'addedBy' });
-InventoryItem.belongsTo(Category, { foreignKey: 'category_id', as: 'category' });
-// Requests
-InventoryRequest.belongsTo(InventoryItem, { foreignKey: 'item_id', as: 'item' });
-InventoryRequest.belongsTo(Employee, { foreignKey: 'requester_id', as: 'requester' });
-InventoryRequest.belongsTo(Employee, { foreignKey: 'approved_by', as: 'approver' });
-
-// Stock transactions
-StockTransaction.belongsTo(InventoryItem, { foreignKey: 'item_id', as: 'item' });
-StockTransaction.belongsTo(Employee, { foreignKey: 'performed_by', as: 'performedBy' });
-
-// expose in exports
-
 // Sync database
 const syncDatabase = async () => {
   try {

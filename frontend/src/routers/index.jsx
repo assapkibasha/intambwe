@@ -18,9 +18,13 @@ import TradeManagementSystem from "../pages/dashboard/employee/trade/TradeManage
 
 import StudentManagementDashboard from "../pages/dashboard/StudentManagementDashboard";
 import ClassManagementDashboard from "../pages/dashboard/class/ClassManagement";
+
 import SubjectPage from "../pages/dashboard/SubjectPage";
+import StudentRegistrationForm from "../components/dashboard/student/StudentRegistrationForm";
+import StudentViewPage from "../components/dashboard/student/StudentViewPage";
 import AssignClassSubjectsPage from "../pages/dashboard/AssignClassSubjectsPage";
 import NotFound from "../pages/NotFound";
+import AttendanceMarkingPage from "../pages/dashboard/AttendanceMarkingPage";
 import MySubjectsPage from "../pages/dashboard/teacher/MySubjectsPage";
 import ClassSelectionPage from "../pages/dashboard/ClassSelectionPage";
 import StudentListPage from "../pages/dashboard/StudentListPage";
@@ -75,13 +79,7 @@ const router = createBrowserRouter([
           { path: "classes", element: <ClassManagementDashboard /> },
           { path: "subjects", element: <SubjectPage /> },
           { path: "assign-class-subjects", element: <AssignClassSubjectsPage /> },
-
-          { path: "class", element: <ClassSelectionPage /> },
-      { path: "class/:classId", element: <StudentListPage /> },
-    { path: "class/:classId/student/:stdId/subject/:sbjId", element: <AddMarksPage /> },
- 
-          
-
+          { path: "attendance", element: <AttendanceMarkingPage /> },
           { path: "my-subjects", element: <MySubjectsPage /> },
              { path:"class", element: <ClassSelectionPage /> },
     { path: "class/:classId", element: <StudentListPage /> },
