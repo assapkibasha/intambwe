@@ -10,6 +10,8 @@ const routeRoleMapping = {
   "/employee/dashboard/employees": ["admin"],
   "/employee/dashboard/department": ["admin"],
   "/employee/dashboard/settings": ["admin"],
+  "/employee/dashboard/assign-class-subjects": ["admin"],
+
   // Stock Manager routes
   "/employee/dashboard/stockout": ["stock_manager", "admin"],
   "/employee/dashboard/sales-report": ["stock_manager", "admin"],
