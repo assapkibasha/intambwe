@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Combobox } from '@headlessui/react';
 import studentService from '../../services/studentService';
 import classService from '../../services/classService';
+import { useNavigate } from 'react-router-dom';
 
 const StudentManagementDashboard = () => {
   const [students, setStudents] = useState([]);
@@ -32,6 +33,8 @@ const StudentManagementDashboard = () => {
   const [classQuery, setClassQuery] = useState('');
   const [selectedClass, setSelectedClass] = useState(null);
 
+  const navigate = useNavigate()
+
   const [formData, setFormData] = useState({
     std_fname: '',
     std_lname: '',
@@ -52,7 +55,7 @@ const StudentManagementDashboard = () => {
     await Promise.all([loadStudents(), loadClasses()]);
   };
 
- const loadStudents = async () => {
+  const loadStudents = async () => {
     try {
       setLoading(true);
       const res = await studentService.getAllStudents();
@@ -123,18 +126,8 @@ const StudentManagementDashboard = () => {
   }, [classes, classQuery]);
 
   const handleAddStudent = () => {
-    setFormData({
-      std_fname: '',
-      std_lname: '',
-      std_email: '',
-      std_phoneNumber: '',
-      std_dob: '',
-      std_gender: 'Male',
-      class_id: ''
-    });
-    setSelectedClass(null);
-    setFormError('');
-    setShowAddModal(true);
+    navigate(`/employee/dashboard/students/create`)
+
   };
 
   const handleInputChange = (e) => {
@@ -218,8 +211,9 @@ const StudentManagementDashboard = () => {
   };
 
   const handleViewStudent = (student) => {
-    setSelectedStudent(student);
-    setShowViewModal(true);
+    if (!student) return null
+    navigate(`/employee/dashboard/students/view/${student.std_id}`)
+
   };
 
   const getFullName = (s) => `${s.std_fname} ${s.std_lname}`;
@@ -264,11 +258,10 @@ const StudentManagementDashboard = () => {
               key={page}
               whileHover={{ scale: 1.05 }}
               onClick={() => setCurrentPage(page)}
-              className={`px-3 py-1.5 text-sm rounded ${
-                currentPage === page
+              className={`px-3 py-1.5 text-sm rounded ${currentPage === page
                   ? 'bg-primary-600 text-white'
                   : 'text-gray-600 border border-gray-200 hover:bg-primary-50'
-              }`}
+                }`}
             >
               {page}
             </motion.button>
@@ -618,11 +611,10 @@ const StudentManagementDashboard = () => {
               exit={{ opacity: 0, y: -20 }}
               className="fixed top-4 right-4 z-50"
             >
-              <div className={`flex items-center space-x-2 px-4 py-2 rounded-lg shadow-lg text-sm ${
-                operationStatus.type === 'success'
+              <div className={`flex items-center space-x-2 px-4 py-2 rounded-lg shadow-lg text-sm ${operationStatus.type === 'success'
                   ? 'bg-green-50 border border-green-200 text-green-800'
                   : 'bg-red-50 border border-red-200 text-red-800'
-              }`}>
+                }`}>
                 {operationStatus.type === 'success' ? <CheckCircle className="w-5 h-5 text-green-600" /> : <XCircle className="w-5 h-5 text-red-600" />}
                 <span className="font-medium">{operationStatus.message}</span>
                 <motion.button whileHover={{ scale: 1.1 }} onClick={() => setOperationStatus(null)}>

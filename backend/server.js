@@ -3,7 +3,7 @@ const cors = require("cors");
 require("dotenv").config();
 
 const db = require("./model");
-const employeeRoute = require("./routes/attendance/employee");
+const employeeRoute = require("./routes/employee");
 const studentRoutes = require("./routes/student");
 
 const attendanceRoutes = require("./routes/attendance/attendanceRoutes");
@@ -80,7 +80,7 @@ app.use((err, req, res, next) => {
 // connection here and start the server. Use explicit migrations (sequelize-cli)
 // to change schemas when needed.
 db.sequelize
-  .authenticate()
+  .sync({ force: false , alter: false })
   .then(() => {
     console.log("Database connection established. Skipping automatic schema sync.");
     app.listen(PORT, () => {
