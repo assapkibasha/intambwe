@@ -26,6 +26,11 @@ const routeRoleMapping = {
   "/employee/dashboard/grades": ["teacher", "admin"],
   "/employee/dashboard/trades": ["teacher", "admin"],
   "/employee/dashboard/subjects": ["teacher", "admin"],
+<<<<<<< HEAD
+=======
+  "/employee/dashboard/my-subjects": ["teacher", "admin"],
+
+>>>>>>> ef9fe5b (added my subjects to teachers)
   // Shared routes (all authenticated employees)
   "/employee/dashboard": ["teacher", "admin", "stock_manager"],
   "/employee/dashboard/profile": ["teacher", "admin", "stock_manager"],

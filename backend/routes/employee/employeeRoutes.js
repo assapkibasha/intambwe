@@ -1,8 +1,14 @@
 // routes/employeeRoutes.js
 const express = require('express');
 const router = express.Router();
+<<<<<<< HEAD:backend/routes/employee/employeeRoutes.js
 const employeeController = require('../../controllers/employee/employeeController');
 const { authenticateToken, authorizeOwnerOrAdmin, authorizeRoles } = require('../../middleware/employeeAuth');
+=======
+const employeeController = require('../../../controllers/employee/employeeController');
+const { authenticateToken, authorizeOwnerOrAdmin, authorizeRoles } = require('../../../middleware/employeeAuth');
+const classSubjectController = require('../../../controllers/class/classSubjectController');
+>>>>>>> ef9fe5b (added my subjects to teachers):backend/routes/attendance/employee/employeeRoutes.js
 
 // CREATE
 router.post('/admin', employeeController.createAdminEmployee);
@@ -11,6 +17,7 @@ router.post('/', authenticateToken, authorizeRoles('admin') ,employeeController.
 // READ
 router.get('/',authenticateToken, authorizeRoles('admin'), employeeController.getAllEmployees);
 router.get('/search', employeeController.searchEmployees);
+router.get('/me/subjects', authenticateToken, authorizeRoles('teacher', 'admin'), classSubjectController.getMyTeachingSubjects);
 router.get('/:id', employeeController.getEmployeeById);
 
 // UPDATE

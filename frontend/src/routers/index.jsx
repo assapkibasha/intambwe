@@ -18,20 +18,14 @@ import TradeManagementSystem from "../pages/dashboard/employee/trade/TradeManage
 
 import StudentManagementDashboard from "../pages/dashboard/StudentManagementDashboard";
 import ClassManagementDashboard from "../pages/dashboard/class/ClassManagement";
-<<<<<<< HEAD
-
-=======
->>>>>>> 3b7b8d7 (hello)
 import SubjectPage from "../pages/dashboard/SubjectPage";
 import AssignClassSubjectsPage from "../pages/dashboard/AssignClassSubjectsPage";
 import NotFound from "../pages/NotFound";
-<<<<<<< HEAD
-import AttendanceMarkingPage from "../pages/dashboard/AttendanceMarkingPage";
-=======
+
 import ClassSelectionPage from "../pages/dashboard/ClassSelectionPage";
 import StudentListPage from "../pages/dashboard/StudentListPage";
 import AddMarksPage from "../pages/dashboard/AddMarksPage";
->>>>>>> 3b7b8d7 (hello)
+
 
 const LoadingSpinner = () => (
 
@@ -82,15 +76,15 @@ const router = createBrowserRouter([
           { path: "classes", element: <ClassManagementDashboard /> },
           { path: "subjects", element: <SubjectPage /> },
           { path: "assign-class-subjects", element: <AssignClassSubjectsPage /> },
-<<<<<<< HEAD
-          { path: "attendance", element: <AttendanceMarkingPage /> },
-=======
+
           { path: "class", element: <ClassSelectionPage /> },
       { path: "class/:classId", element: <StudentListPage /> },
     { path: "class/:classId/student/:stdId/subject/:sbjId", element: <AddMarksPage /> },
  
           
->>>>>>> 3b7b8d7 (hello)
+
+          { path: "my-subjects", element: <MySubjectsPage /> },
+
         ],
       },
       // Any unknown /employee/... path (including unknown dashboard URLs) should render
