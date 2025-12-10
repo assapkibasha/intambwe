@@ -1,11 +1,15 @@
 const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
+const cookieParser = require("cookie-parser");
+const morgan = require("morgan");
 
+// Database
 const db = require("./model");
+
+// Routes
 const employeeRoute = require("./routes/employee");
 const studentRoutes = require("./routes/student");
-
 const attendanceRoutes = require("./routes/attendance/attendanceRoutes");
 const classRoutes = require("./routes/class/classRoutes");
 const marksRoutes = require("./routes/marks/marksRoutes");
@@ -22,13 +26,13 @@ const stockRoutes = require('./routes/stockRoutes');
 const assetRequestRoutes = require('./routes/assetRequest/assetRequestRoutes');
 
 
-const cookieParser = require("cookie-parser");
-const morgan = require("morgan");
+// ✅ Correct path for assessment route
+const assessmentRoutes = require("./routes/marks/marksRoutes");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-/* ✅ ONE CORS CONFIG — THIS IS ENOUGH */
+/* CORS Configuration */
 app.use(
   cors({
     origin: "http://localhost:5173",
@@ -41,7 +45,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev"));
 
-/* ✅ Routes */
+/* API Routes */
 app.use("/api/employee", employeeRoute);
 app.use("/api/student", studentRoutes);
 app.use("/api/attendance", attendanceRoutes);
@@ -53,18 +57,14 @@ app.use("/api/subject", subjectRoutes);
 app.use("/api/timetable", timetableRoutes);
 app.use("/api/timetable-entry", timetableEntryRoutes);
 app.use("/api/trade", tradeRoutes);
-app.use('/api/inventory', inventoryRoutes);
-app.use('/api/inventory/requests', inventoryRequestRoutes);
-app.use('/api/inventory/categories', categoryRoutes);
-app.use('/api/inventory/stock', stockRoutes);
-app.use('/api/assets/requests', assetRequestRoutes);
+app.use("/api/assessment", assessmentRoutes);
 
-/* ✅ Health check */
+/* Health Check Route */
 app.get("/", (req, res) => {
   res.json({ message: "Attendance Management API is running" });
 });
 
-/* ✅ Error handler */
+/* Global Error Handler */
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({
@@ -73,14 +73,9 @@ app.use((err, req, res, next) => {
   });
 });
 
-/* ✅ Start server */
-// Do not run `sync({ alter: true })` automatically in production-like environments.
-// Automatic schema alterations can generate many ALTER statements and cause
-// unexpected SQL errors (and is unsafe for production). Authenticate the DB
-// connection here and start the server. Use explicit migrations (sequelize-cli)
-// to change schemas when needed.
+/* Start Server */
 db.sequelize
-  .sync({ alter: true })
+  .sync({ force: false, alter: false })
   .then(() => {
     console.log("Database connection established. Skipping automatic schema sync.");
     app.listen(PORT, () => {
