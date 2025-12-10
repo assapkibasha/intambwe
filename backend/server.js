@@ -80,7 +80,7 @@ app.use((err, req, res, next) => {
 // connection here and start the server. Use explicit migrations (sequelize-cli)
 // to change schemas when needed.
 db.sequelize
-  .sync({ force: false , alter: false })
+  .sync({ alter: true })
   .then(() => {
     console.log("Database connection established. Skipping automatic schema sync.");
     app.listen(PORT, () => {

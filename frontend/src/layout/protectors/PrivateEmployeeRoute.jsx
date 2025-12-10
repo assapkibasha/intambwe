@@ -10,6 +10,8 @@ const routeRoleMapping = {
   "/employee/dashboard/employees": ["admin"],
   "/employee/dashboard/department": ["admin"],
   "/employee/dashboard/settings": ["admin"],
+  "/employee/dashboard/assign-class-subjects": ["admin"],
+
   // Stock Manager routes
   "/employee/dashboard/stockout": ["stock_manager", "admin"],
   "/employee/dashboard/sales-report": ["stock_manager", "admin"],
@@ -30,15 +32,16 @@ const routeRoleMapping = {
 };
 
 export const hasAccess = (route, userRole) => {
-  for (const baseRoute in routeRoleMapping) {
-    // If the route starts with the base route (prefix match)
-    if (route.startsWith(baseRoute)) {
-      const allowedRoles = routeRoleMapping[baseRoute];
-      return allowedRoles.includes(userRole);
-    }
+  const allowedRoles = routeRoleMapping[route];
+
+  // If the route is not explicitly mapped, it is considered public for any authenticated employee.
+  // This allows the dashboard catch-all 404 route (and other unmapped routes) to render normally
+  // instead of being blocked with an Access Denied message.
+  if (!allowedRoles) {
+    return true;
   }
 
-  return false; // Default deny
+  return allowedRoles.includes(userRole);
 };
 
 

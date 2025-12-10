@@ -1,8 +1,6 @@
 import React from 'react'
 
 import ServiceSection from '../components/ServiseSection';
-import Testimonial from '../components/Testimonial'
-
 import Navbar from '../components/Navbar'
 import HowItWorks from '../components/HowItWorks'
 import BlogSection from '../components/Blog'
