@@ -1,11 +1,6 @@
 import React from 'react'
 
 import ServiceSection from '../components/ServiseSection';
-<<<<<<< HEAD
-import Testimonial from '../components/Testimonial'
-=======
->>>>>>> origin/fabrice
-
 import Navbar from '../components/Navbar'
 import HowItWorks from '../components/HowItWorks'
 import BlogSection from '../components/Blog'
