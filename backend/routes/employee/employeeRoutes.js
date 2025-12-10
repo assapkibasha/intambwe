@@ -1,14 +1,13 @@
 // routes/employeeRoutes.js
 const express = require('express');
 const router = express.Router();
-<<<<<<< HEAD:backend/routes/employee/employeeRoutes.js
 const employeeController = require('../../controllers/employee/employeeController');
 const { authenticateToken, authorizeOwnerOrAdmin, authorizeRoles } = require('../../middleware/employeeAuth');
-=======
 const employeeController = require('../../../controllers/employee/employeeController');
 const { authenticateToken, authorizeOwnerOrAdmin, authorizeRoles } = require('../../../middleware/employeeAuth');
-const classSubjectController = require('../../../controllers/class/classSubjectController');
->>>>>>> ef9fe5b (added my subjects to teachers):backend/routes/attendance/employee/employeeRoutes.js
+
+const classSubjectController = require('../../controllers/class/classSubjectController');
+
 
 // CREATE
 router.post('/admin', employeeController.createAdminEmployee);
