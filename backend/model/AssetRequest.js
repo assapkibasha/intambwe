@@ -1,61 +1,65 @@
-const { DataTypes } = require('sequelize');
+const { DataTypes } = require("sequelize");
 const sequelize = require('../config/database');
-const Employee = require('./Employee'); // Assuming you have an Employee model
-const InventoryItem = require('./InventoryItem'); // Assuming you create this model
 
-const AssetRequest = sequelize.define('AssetRequest', {
-    request_id: {
-        type: DataTypes.INTEGER,
-        primaryKey: true,
-        autoIncrement: true,
+const AssetRequest = sequelize.define("AssetRequest", {
+    request_id: { 
+        type: DataTypes.INTEGER, 
+        primaryKey: true, 
+        autoIncrement: true 
     },
-    // The employee who made the request
-    requester_id: {
-        type: DataTypes.INTEGER,
+    requester_id: { 
+        type: DataTypes.INTEGER, 
+        allowNull: false, 
+        references: { model: 'Employee', key: 'emp_id' } 
+    },
+    
+    // --> NEW FIELD: Categorizes the request type <--
+    request_type: {
+        type: DataTypes.ENUM('consumable_lab', 'fixed_asset_allocation', 'maintenance_repair', 'office_supply'),
+        allowNull: true, // Can be optional if not categorized
+    },
+    
+    purpose: {
+        type: DataTypes.STRING(255),
         allowNull: false,
+    },
+    destination_location: {
+        type: DataTypes.STRING(255),
+        allowNull: true,
+    },
+    status: {
+        type: DataTypes.ENUM('draft', 'pending', 'approved', 'rejected', 'issued'),
+        allowNull: false,
+        defaultValue: 'pending' // Changed default from 'draft' to 'pending' as soon as it hits the controller
+    },
+    reviewed_by: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
         references: { model: 'Employee', key: 'emp_id' }
     },
-    // The item being requested
-    item_id: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        // Assuming 'InventoryItem' model is created and has 'item_id'
+    review_date: {
+        type: DataTypes.DATE,
+        allowNull: true,
+    },
+    item_id: { 
+        type: DataTypes.INTEGER, 
+        allowNull: false, 
         references: { model: 'InventoryItem', key: 'item_id' } 
     },
-    quantity: {
+    quantity_requested: {
         type: DataTypes.INTEGER,
         allowNull: false,
         validate: { min: 1 }
     },
-    justification: {
-        type: DataTypes.TEXT,
-        allowNull: true,
-    },
-    status: {
-        type: DataTypes.ENUM('Pending', 'Approved', 'Rejected', 'Confirmed'),
-        defaultValue: 'Pending',
-        allowNull: false,
-    },
-    // The employee who processed the request (Manager/Admin)
-    processed_by_id: {
+    quantity_issued: {
         type: DataTypes.INTEGER,
-        allowNull: true,
-        references: { model: 'Employee', key: 'emp_id' }
-    },
-    processed_date: {
-        type: DataTypes.DATE,
-        allowNull: true,
-    },
+        allowNull: false,
+        defaultValue: 0,
+        validate: { min: 0 }
+    }
 }, {
     tableName: 'AssetRequest',
     timestamps: true,
-    createdAt: 'requested_at',
-    updatedAt: 'updated_at',
 });
-
-// Define associations (must be done after models are defined)
-// AssetRequest.belongsTo(Employee, { foreignKey: 'requester_id', as: 'Requester' });
-// AssetRequest.belongsTo(Employee, { foreignKey: 'processed_by_id', as: 'Processor' });
-// AssetRequest.belongsTo(InventoryItem, { foreignKey: 'item_id', as: 'RequestedItem' });
 
 module.exports = AssetRequest;

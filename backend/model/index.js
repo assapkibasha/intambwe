@@ -19,7 +19,8 @@ const Supplier = require('./Supplier');
 const InventoryItem = require("./InventoryItem");
 const StockIn = require('./StockIn');
 const StockDetail = require('./StockDetail'); 
-const StockTransaction = require('./StockTransaction'); // Assuming this model exists based on the original code
+const StockTransaction = require('./StockTransaction');
+const AssetRequest = require('./AssetRequest'); // Assuming this model exists based on the original code
 // const AssetRequest = require('./AssetRequest'); // Commented out as model definition is not shown
 
 // Define Associations
@@ -175,6 +176,14 @@ Supplier.hasMany(StockIn, { foreignKey: 'supplier_id', as: 'stockIns' });
 // Category
 Category.hasMany(InventoryItem, { foreignKey: 'category_id', as: 'items' });
 
+
+// AssetRequest Associations
+// A request is made by an Employee
+AssetRequest.belongsTo(Employee, { foreignKey: 'requester_id', as: 'requester' });
+// A request can be reviewed by an Employee (Manager)
+AssetRequest.belongsTo(Employee, { foreignKey: 'reviewed_by', as: 'reviewer' });
+// A request is for a specific InventoryItem
+AssetRequest.belongsTo(InventoryItem, { foreignKey: 'item_id', as: 'requestedItem' });
 // Employee (The inverse relation for StockIn is usually not needed unless you want to find all receipts an employee handled)
 // Employee.hasMany(StockIn, { foreignKey: 'received_by', as: 'receivedDocuments' });
 
@@ -215,5 +224,5 @@ module.exports = {
     StockIn,
     StockDetail,
     StockTransaction,
-    // AssetRequest,
+    AssetRequest,
 };

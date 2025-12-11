@@ -19,9 +19,7 @@ const subjectRoutes = require("./routes/subject/subjectRoutes");
 const timetableRoutes = require("./routes/timetable/timetableRoutes");
 const timetableEntryRoutes = require("./routes/timetableEntry/timetableEntryRoutes");
 const tradeRoutes = require("./routes/trade/tradeRoutes");
-const inventoryRequestRoutes = require('./routes/inventoryRequestRoutes');
 const stockRoutes = require('./routes/stockRoutes');
-const assetRequestRoutes = require('./routes/assetRequest/assetRequestRoutes');
 
 // ✅ Correct path for assessment route
 const assessmentRoutes = require("./routes/marks/marksRoutes");
@@ -29,6 +27,8 @@ const supplierRoutes = require('./routes/supplier/supplierRoutes');
 const assetCategoryRoutes = require('./routes/assetCategory/assetCategoryRoutes');
 const inventoryRoutes = require('./routes/invetory/inventoryRoutes');
 const stockInRoutes = require('./routes/stockIn/stockInRoutes');
+const stockTransactionRoutes = require('./routes/invetory/stockTransactionRoutes');
+const assetRequestRoutes = require('./routes/invetory/assetRequestRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -63,6 +63,8 @@ app.use('/api/inventory/suppliers', supplierRoutes);
 app.use('/api/inventory/categories', assetCategoryRoutes);
 app.use('/api/inventory/items', inventoryRoutes);
 app.use('/api/inventory/stock-in', stockInRoutes);
+app.use('/api/inventory/transactions', stockTransactionRoutes);
+app.use('/api/inventory/requests', assetRequestRoutes);
 
 
 /* Health Check Route */
