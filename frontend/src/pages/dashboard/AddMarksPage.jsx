@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import marksService from "../../services/marksService";
+import marksService from "../../services/marksAssessmentService";
 
 const AddMarksPage = () => {
   const { classId, stdId, sbjId } = useParams();

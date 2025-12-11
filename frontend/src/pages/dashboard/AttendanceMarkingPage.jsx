@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, CheckCircle, XCircle, Clock, Save, AlertCircle } from 'lucide-react';
+import { Search, CheckCircle, XCircle, Clock, Save, AlertCircle, Filter } from 'lucide-react';
 
 // Import your services (adjust paths as needed)
 import studentService from '../../services/studentService';
@@ -8,23 +8,80 @@ import attendanceService from '../../services/attendanceService';
 
 const AttendanceMarkingPage = () => {
   const [classes, setClasses] = useState([]);
-  const [selectedClassId, setSelectedClassId] = useState('');
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
   const [isViewMode, setIsViewMode] = useState(false);
   const [attendanceExists, setAttendanceExists] = useState(false);
   
   // Get current date and time
-  const getCurrentDate = () => new Date().toISOString().split('T')[0];
-  const getCurrentTime = () => new Date().toTimeString().split(' ')[0].substring(0, 5);
-  
-  const [attendanceDate, setAttendanceDate] = useState(getCurrentDate());
-  const [attendanceTime, setAttendanceTime] = useState(getCurrentTime());
-  const [timeOut, setTimeOut] = useState('');
+const getCurrentDate = () => {
+  return new Intl.DateTimeFormat('en-CA', { // 'en-CA' gives YYYY-MM-DD format
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).format(new Date());
+};
+
+const getCurrentTime = () => {
+  return new Intl.DateTimeFormat('en-GB', { // 'en-GB' gives 24-hour format
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  }).format(new Date());
+};
+
+
+  // Initialize state from URL params or localStorage
+  const getInitialState = () => {
+    const params = new URLSearchParams(window.location.search);
+    const stored = localStorage.getItem('attendanceFilters');
+    const storedData = stored ? JSON.parse(stored) : {};
+    
+    return {
+      selectedClassId: params.get('classId') || storedData.selectedClassId || '',
+      attendanceDate: params.get('date') || storedData.attendanceDate || getCurrentDate(),
+      attendanceTime: params.get('timeIn') || storedData.attendanceTime || getCurrentTime(),
+      timeOut: params.get('timeOut') || storedData.timeOut || '',
+      searchTerm: params.get('search') || storedData.searchTerm || '',
+      statusFilter: params.get('status') || storedData.statusFilter || 'all'
+    };
+  };
+
+  const initialState = getInitialState();
+  const [selectedClassId, setSelectedClassId] = useState(initialState.selectedClassId);
+  const [attendanceDate, setAttendanceDate] = useState(initialState.attendanceDate);
+  const [attendanceTime, setAttendanceTime] = useState(initialState.attendanceTime);
+  const [timeOut, setTimeOut] = useState(initialState.timeOut);
+  const [searchTerm, setSearchTerm] = useState(initialState.searchTerm);
+  const [statusFilter, setStatusFilter] = useState(initialState.statusFilter);
+
+  // Update URL and localStorage whenever filters change
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (selectedClassId) params.set('classId', selectedClassId);
+    if (attendanceDate) params.set('date', attendanceDate);
+    if (attendanceTime) params.set('timeIn', attendanceTime);
+    if (timeOut) params.set('timeOut', timeOut);
+    if (searchTerm) params.set('search', searchTerm);
+    if (statusFilter !== 'all') params.set('status', statusFilter);
+
+    // Update URL without reloading
+    const newUrl = `${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}`;
+    window.history.replaceState({}, '', newUrl);
+
+    // Save to localStorage
+    localStorage.setItem('attendanceFilters', JSON.stringify({
+      selectedClassId,
+      attendanceDate,
+      attendanceTime,
+      timeOut,
+      searchTerm,
+      statusFilter
+    }));
+  }, [selectedClassId, attendanceDate, attendanceTime, timeOut, searchTerm, statusFilter]);
 
   // Check if selected date is in the past (not today)
   const isDateInPast = () => {
@@ -77,97 +134,68 @@ const AttendanceMarkingPage = () => {
     setAttendanceExists(false);
     
     try {
-      // Fetch students in the class
+      // Step 1: Fetch ALL students in the class
       const studentsResponse = await studentService.getStudentsByClass(classId);
       const studentsData = studentsResponse.data || studentsResponse;
       
-      // Try to fetch existing attendance for this date
+      // Step 2: Fetch attendance records for this class and date
+      let attendanceData = [];
       try {
-        const attendanceResponse = await attendanceService.getAttendanceByClassAndDate(classId, date);
-        const attendanceData = attendanceResponse.data || attendanceResponse;
-        
-        if (attendanceData && attendanceData.length > 0) {
-          // Attendance exists for this date
-          setAttendanceExists(true);
-          
-          // Map attendance to students
-          const studentsWithAttendance = studentsData.map(student => {
-            const attendance = attendanceData.find(att => att.student_id === student.std_id);
-            
-            if (attendance) {
-              return {
-                ...student,
-                status: attendance.status || 'present',
-                recorded: true,
-                time_in: attendance.time_in || '',
-                time_out: attendance.time_out || '',
-                attendance_id: attendance.attendance_id
-              };
-            } else {
-              // Student exists but no attendance record
-              return {
-                ...student,
-                status: 'present',
-                recorded: false,
-                time_in: '',
-                time_out: ''
-              };
-            }
-          });
-          
-          setStudents(studentsWithAttendance);
-          
-          // Set view mode if date is in the past
-          if (isDateInPast()) {
-            setIsViewMode(true);
-            setError('');
-          } else {
-            setIsViewMode(false);
-          }
-          
-        } else {
-          // No attendance for this date
-          setAttendanceExists(false);
-          
-          if (isDateInPast()) {
-            // Past date with no attendance
-            setIsViewMode(true);
-            setError(`No attendance records found for ${date}`);
-            setStudents([]);
-          } else {
-            // Today or future - allow marking
-            setIsViewMode(false);
-            const studentsWithStatus = studentsData.map(student => ({
-              ...student,
-              status: 'present',
-              recorded: false,
-              time_in: '',
-              time_out: ''
-            }));
-            setStudents(studentsWithStatus);
-          }
-        }
-        
+        const attendanceResponse = await attendanceService.getAttendance({class_id:classId,start_date:date , end_date:date});
+        attendanceData = attendanceResponse.data || attendanceResponse || [];
       } catch (attendanceErr) {
-        // No attendance found for this date
-        setAttendanceExists(false);
+        console.warn('error',attendanceErr);
         
-        if (isDateInPast()) {
-          setIsViewMode(true);
-          setError(`No attendance records found for ${date}`);
-          setStudents([]);
+        // No attendance found - continue with empty array
+        attendanceData = [{shit:''}];
+      }
+      console.warn('serge ',attendanceData,studentsData);
+
+     
+      
+      // Step 3: Check if any attendance exists for this date
+      const hasAttendanceRecords = attendanceData && attendanceData.length > 0;
+      setAttendanceExists(hasAttendanceRecords);
+      
+      // Step 4: Map students and check if each has existing attendance
+      const studentsWithAttendance = studentsData.map(student => {
+        // Find if this student has attendance record for this date
+        const existingAttendance = attendanceData.find(att => att.student_id === student.std_id);
+        
+        if (existingAttendance) {
+          // Student has existing attendance - mark as recorded
+          return {
+            ...student,
+            status: existingAttendance.status || 'present',
+            recorded: true, // Mark as recorded since attendance exists
+            time_in: existingAttendance.time_in || '',
+            time_out: existingAttendance.time_out || '',
+            attendance_id: existingAttendance.id // Use 'id' from Attendance model
+          };
         } else {
-          // Today - allow marking
-          setIsViewMode(false);
-          const studentsWithStatus = studentsData.map(student => ({
+          // Student has no attendance record - mark as not recorded
+          return {
             ...student,
             status: 'present',
-            recorded: false,
+            recorded: false, // Not recorded yet
             time_in: '',
             time_out: ''
-          }));
-          setStudents(studentsWithStatus);
+          };
         }
+      });
+      
+      setStudents(studentsWithAttendance);
+      
+      // Step 5: Determine if it's view mode or edit mode
+      if (isDateInPast()) {
+        // Past date
+        setIsViewMode(true);
+        if (!hasAttendanceRecords) {
+          setError(`No attendance records found for ${date}`);
+        }
+      } else {
+        // Today or future - allow editing
+        setIsViewMode(false);
       }
       
     } catch (err) {
@@ -306,8 +334,26 @@ const AttendanceMarkingPage = () => {
           };
           return await attendanceService.updateAttendance(student.attendance_id, updateData);
         });
+      
+      // Also handle students that don't have attendance yet (recorded: false)
+      const newAttendanceRecords = students
+        .filter(student => !student.recorded)
+        .map(student => ({
+          student_id: student.std_id,
+          class_id: parseInt(selectedClassId),
+          date: attendanceDate,
+          time_in: attendanceTime,
+          time_out: timeOut || null,
+          status: student.status,
+          method: 'manual'
+        }));
+      
+      const createPromises = newAttendanceRecords.map(async (record) =>
+        await attendanceService.recordAttendance(record)
+      );
 
       await Promise.all(updatePromises);
+      await Promise.all(createPromises);
 
       // Refresh the data
       await fetchStudentsWithAttendance(selectedClassId, attendanceDate);
@@ -322,11 +368,17 @@ const AttendanceMarkingPage = () => {
     }
   };
 
-  // Filter students by search term
+  // Filter students by search term and status filter
   const filteredStudents = students.filter(student => {
+    // Search filter
     const fullName = `${student.std_fname} ${student.std_mname || ''} ${student.std_lname}`.toLowerCase();
-    return fullName.includes(searchTerm.toLowerCase()) || 
+    const matchesSearch = fullName.includes(searchTerm.toLowerCase()) || 
            student.std_email?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Status filter
+    const matchesStatus = statusFilter === 'all' || student.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
   });
 
   // Get status button classes
@@ -352,6 +404,28 @@ const AttendanceMarkingPage = () => {
         return baseClass + disabledClass;
     }
   };
+
+  // Get status filter button class
+  const getFilterButtonClass = (filterValue) => {
+    const isActive = statusFilter === filterValue;
+    return `px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+      isActive 
+        ? 'bg-blue-600 text-white shadow-lg' 
+        : 'bg-gray-100 text-gray-600 hover:bg-blue-100'
+    }`;
+  };
+
+  // Get status counts
+  const getStatusCounts = () => {
+    return {
+      total: students.length,
+      present: students.filter(s => s.status === 'present').length,
+      late: students.filter(s => s.status === 'late').length,
+      absent: students.filter(s => s.status === 'absent').length
+    };
+  };
+
+  const statusCounts = getStatusCounts();
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -396,6 +470,7 @@ const AttendanceMarkingPage = () => {
               <input
                 type="date"
                 value={attendanceDate}
+                max={getCurrentDate()}
                 onChange={handleDateChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
@@ -475,8 +550,28 @@ const AttendanceMarkingPage = () => {
         {/* Students List */}
         {!loading && students.length > 0 && (
           <div className="bg-white rounded-lg shadow-md p-6">
-            {/* Search Bar */}
-            <div className="mb-6">
+            {/* Status Summary */}
+            <div className="mb-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="bg-blue-50 rounded-lg p-4">
+                <div className="text-sm text-gray-600 mb-1">Total Students</div>
+                <div className="text-2xl font-bold text-blue-600">{statusCounts.total}</div>
+              </div>
+              <div className="bg-green-50 rounded-lg p-4">
+                <div className="text-sm text-gray-600 mb-1">Present</div>
+                <div className="text-2xl font-bold text-green-600">{statusCounts.present}</div>
+              </div>
+              <div className="bg-amber-50 rounded-lg p-4">
+                <div className="text-sm text-gray-600 mb-1">Late</div>
+                <div className="text-2xl font-bold text-amber-600">{statusCounts.late}</div>
+              </div>
+              <div className="bg-red-50 rounded-lg p-4">
+                <div className="text-sm text-gray-600 mb-1">Absent</div>
+                <div className="text-2xl font-bold text-red-600">{statusCounts.absent}</div>
+              </div>
+            </div>
+
+            {/* Search and Filter Bar */}
+            <div className="mb-6 space-y-4">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
                 <input
@@ -486,6 +581,36 @@ const AttendanceMarkingPage = () => {
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
+              </div>
+
+              {/* Status Filter Buttons */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <Filter size={20} className="text-gray-600" />
+                <span className="text-sm font-medium text-gray-700">Filter by Status:</span>
+                <button
+                  onClick={() => setStatusFilter('all')}
+                  className={getFilterButtonClass('all')}
+                >
+                  All ({statusCounts.total})
+                </button>
+                <button
+                  onClick={() => setStatusFilter('present')}
+                  className={getFilterButtonClass('present')}
+                >
+                  Present ({statusCounts.present})
+                </button>
+                <button
+                  onClick={() => setStatusFilter('late')}
+                  className={getFilterButtonClass('late')}
+                >
+                  Late ({statusCounts.late})
+                </button>
+                <button
+                  onClick={() => setStatusFilter('absent')}
+                  className={getFilterButtonClass('absent')}
+                >
+                  Absent ({statusCounts.absent})
+                </button>
               </div>
             </div>
 
@@ -567,7 +692,7 @@ const AttendanceMarkingPage = () => {
 
             {filteredStudents.length === 0 && (
               <div className="text-center py-8 text-gray-500">
-                No students found matching your search.
+                No students found matching your filters.
               </div>
             )}
 
@@ -623,6 +748,8 @@ const AttendanceMarkingPage = () => {
             <p className="text-gray-600 text-lg">No students found in this class.</p>
           </div>
         )}
+
+
 
         {!selectedClassId && (
           <div className="bg-white rounded-lg shadow-md p-12 text-center">

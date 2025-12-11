@@ -24,6 +24,7 @@ import MySubjectsPage from "../pages/dashboard/teacher/MySubjectsPage";
 import ClassSelectionPage from "../pages/dashboard/ClassSelectionPage";
 import StudentListPage from "../pages/dashboard/StudentListPage";
 import AddMarksPage from "../pages/dashboard/AddMarksPage";
+import MarksEntryPage from "../pages/dashboard/MarksEntryPage";
 
 const LoadingSpinner = () => (
 
@@ -79,6 +80,7 @@ const router = createBrowserRouter([
              { path:"class", element: <ClassSelectionPage /> },
     { path: "class/:classId", element: <StudentListPage /> },
     { path: "class/:classId/student/:stdId/subject/:sbjId", element: <AddMarksPage /> },
+    { path: "marks-entry", element: <MarksEntryPage /> },
  
         ],
       },
