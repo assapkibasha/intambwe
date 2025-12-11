@@ -11,12 +11,16 @@ const TimetableEntry = require("./TimetableEntry");
 const SpecialEvent = require("./SpecialEvent");
 const Attendance = require("./Attendance");
 const Trade = require("./Trade");
-const InventoryItem = require("./InventoryItem");
 const InventoryRequest = require('./InventoryRequest');
 const Category = require('./Category');
-const StockTransaction = require('./StockTransaction');
 const SubjectTrade = require("./SubjectTrade");
 const ClassSubject = require("./ClassSubject");
+const Supplier = require('./Supplier');
+const InventoryItem = require("./InventoryItem");
+const StockIn = require('./StockIn');
+const StockDetail = require('./StockDetail'); 
+const StockTransaction = require('./StockTransaction'); // Assuming this model exists based on the original code
+// const AssetRequest = require('./AssetRequest'); // Commented out as model definition is not shown
 
 // Define Associations
 
@@ -135,7 +139,44 @@ Attendance.belongsTo(Student, { foreignKey: "student_id", as: "student" });
 Attendance.belongsTo(Class, { foreignKey: "class_id", as: "class" });
 Attendance.belongsTo(Employee, { foreignKey: "emp_id", as: "recordedBy" });
 
+// --- INVENTORY CORE ASSOCIATIONS ---
 
+// 1. InventoryItem (The Product Master)
+// An InventoryItem belongs to one Category
+InventoryItem.belongsTo(Category, { foreignKey: 'category_id', as: 'category' }); 
+// An InventoryItem belongs to one default Supplier
+InventoryItem.belongsTo(Supplier, { foreignKey: 'default_supplier_id', as: 'defaultSupplier' }); 
+// An InventoryItem has many Stock Details (Line items from receipts)
+InventoryItem.hasMany(StockDetail, { foreignKey: 'item_id', as: 'receiptDetails' });
+// An InventoryItem has many Stock Transactions (Movement history)
+InventoryItem.hasMany(StockTransaction, { foreignKey: 'item_id', as: 'transactions' }); 
+// InventoryItem.hasMany(AssetRequest, { foreignKey: 'item_id', as: 'requests' }); // Keep if AssetRequest model is used
+
+// 2. StockIn (The Receipt Header Document)
+// A StockIn document belongs to one Employee (Receiver)
+StockIn.belongsTo(Employee, { foreignKey: 'received_by', as: 'receiver' });
+// A StockIn document belongs to one Supplier (Source)
+StockIn.belongsTo(Supplier, { foreignKey: 'supplier_id', as: 'sourceSupplier' });
+// A StockIn document has many Stock Details (Line items)
+StockIn.hasMany(StockDetail, { foreignKey: 'stock_in_id', as: 'stockItems' });
+
+// 3. StockDetail (The Receipt Line Item)
+// A StockDetail belongs to one StockIn document
+StockDetail.belongsTo(StockIn, { foreignKey: 'stock_in_id', as: 'stockIn' });
+// A StockDetail belongs to one InventoryItem
+StockDetail.belongsTo(InventoryItem, { foreignKey: 'item_id', as: 'item' }); 
+
+// --- INVERSE ASSOCIATIONS (For easier querying from the other side) ---
+
+// Supplier
+Supplier.hasMany(InventoryItem, { foreignKey: 'default_supplier_id', as: 'defaultedItems' });
+Supplier.hasMany(StockIn, { foreignKey: 'supplier_id', as: 'stockIns' }); 
+
+// Category
+Category.hasMany(InventoryItem, { foreignKey: 'category_id', as: 'items' });
+
+// Employee (The inverse relation for StockIn is usually not needed unless you want to find all receipts an employee handled)
+// Employee.hasMany(StockIn, { foreignKey: 'received_by', as: 'receivedDocuments' });
 
 // Sync database
 const syncDatabase = async () => {
@@ -168,4 +209,11 @@ module.exports = {
   syncDatabase,
   Trade,
   ClassSubject,
+  Supplier,
+  Category,
+  InventoryItem, // <-- Ensure this is present
+    StockIn,
+    StockDetail,
+    StockTransaction,
+    // AssetRequest,
 };

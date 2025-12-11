@@ -1,5 +1,5 @@
-const { AssetRequest, Employee, InventoryItem, sequelize } = require('../../model'); // Update your model imports
-const stockController = require('../stockController'); // Import for stockOut logic
+const { AssetRequest, Employee, InventoryItem, sequelize } = require('../model'); // Update your model imports
+const stockController = require('../controllers/stockController'); // Import for stockOut logic
 
 const assetRequestController = {
 

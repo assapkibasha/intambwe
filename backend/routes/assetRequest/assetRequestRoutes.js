@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const assetRequestController = require('../controllers/assetRequestController');
-const { authenticateToken, authorizeRoles } = require('../middleware/employeeAuth');
+const assetRequestController = require('../../controllers/assetRequestController')
+const { authenticateToken, authorizeRoles } = require('../../middleware/employeeAuth');
 
 // 1. EMPLOYEE ENDPOINT: Submit a new request (Frontend "Request Asset" button)
 router.post(

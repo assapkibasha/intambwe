@@ -5,7 +5,6 @@ const employeeController = require('../../controllers/employee/employeeControlle
 const { authenticateToken, authorizeOwnerOrAdmin, authorizeRoles } = require('../../middleware/employeeAuth');
 const classSubjectController = require('../../controllers/class/classSubjectController');
 
-const classSubjectController = require('../../controllers/class/classSubjectController');
 
 
 // CREATE

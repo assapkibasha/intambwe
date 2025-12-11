@@ -1,74 +1,65 @@
-// routes/stockIn.js
+// routes/stockIn/stockInRoutes.js
 const express = require('express');
 const router = express.Router();
-const stockInController = require('../controllers/stockIn/stockInController');
-const { authenticateToken, authorizeRoles } = require('../middleware/employeeAuth');
+const stockInController = require('../../controllers/stockIn/stockInController'); 
+const stockDetailController = require('../../controllers/stockIn/stockDetailController'); 
+const { authenticateToken, authorizeRoles } = require('../../middleware/employeeAuth'); 
 
-// CREATE - Only admin and stock_manager can create stock in records
+// Base route for Stock In documents: /api/inventory/stock-in
+
+// POST: Create a new Stock In Document (Header)
 router.post(
-  '/',
-  authenticateToken,
-  authorizeRoles('admin', 'stock_manager'),
-  stockInController.createStockIn
+    '/', 
+    authenticateToken, 
+    authorizeRoles('admin', 'stock_manager'), 
+    stockInController.createStockIn
 );
 
-// READ - All authenticated users can view
+// Example: POST /api/inventory/stock-in/2/details
+router.post(
+    '/:id/details', 
+    authenticateToken, 
+    authorizeRoles('admin', 'stock_manager'), 
+    stockDetailController.createStockDetails // <--- ADD THIS LINE
+);
+
+// GET: List all Stock In Documents with filtering and pagination
 router.get(
-  '/',
-  authenticateToken,
-  stockInController.getAllStockIn
+    '/', 
+    authenticateToken, 
+    authorizeRoles('admin', 'stock_manager', 'employee'), 
+    stockInController.getAllStockIn
 );
 
-// SEARCH - Search before /:id to avoid conflicts
+// GET: Stock In Summary/Statistics
 router.get(
-  '/search',
-  authenticateToken,
-  stockInController.searchStockIn
+    '/summary', 
+    authenticateToken, 
+    authorizeRoles('admin', 'stock_manager'), 
+    stockInController.getStockInSummary
 );
 
-// SUMMARY - Statistics
+// GET: Search Stock In Records
 router.get(
-  '/summary',
-  authenticateToken,
-  stockInController.getStockInSummary
+    '/search', 
+    authenticateToken, 
+    authorizeRoles('admin', 'stock_manager', 'employee'), 
+    stockInController.searchStockIn
 );
 
-// READ by ID
-router.get(
-  '/:id',
-  authenticateToken,
-  stockInController.getStockInById
-);
+// GET, PUT, DELETE operations on a specific Stock In ID
+router.route('/:id')
+    .get(authenticateToken, authorizeRoles('admin', 'stock_manager', 'employee'), stockInController.getStockInById)
+    .put(authenticateToken, authorizeRoles('admin', 'stock_manager'), stockInController.updateStockIn)
+    .delete(authenticateToken, authorizeRoles('admin', 'stock_manager'), stockInController.deleteStockIn);
 
-// UPDATE - Only admin and stock_manager can update
-router.put(
-  '/:id',
-  authenticateToken,
-  authorizeRoles('admin', 'stock_manager'),
-  stockInController.updateStockIn
-);
-
+// PATCH: Update only the status of a Stock In document
 router.patch(
-  '/:id',
-  authenticateToken,
-  authorizeRoles('admin', 'stock_manager'),
-  stockInController.updateStockIn
+    '/:id/status', 
+    authenticateToken, 
+    authorizeRoles('admin', 'stock_manager'), 
+    stockInController.updateStockInStatus
 );
 
-// UPDATE STATUS - Only admin and stock_manager can update status
-router.patch(
-  '/:id/status',
-  authenticateToken,
-  authorizeRoles('admin', 'stock_manager'),
-  stockInController.updateStockInStatus
-);
-
-// DELETE - Only admin can delete
-router.delete(
-  '/:id',
-  authenticateToken,
-  authorizeRoles('admin'),
-  stockInController.deleteStockIn
-);
 
 module.exports = router;
