@@ -46,7 +46,7 @@ const inventoryController = {
         offset: parseInt(offset),
         include: [
           { model: Employee, as: 'addedBy', attributes: ['emp_id','emp_name'] },
-          { model: Category, attributes: ['category_id', 'name'] },
+          { model: Category, as: 'category', attributes: ['category_id', 'name'] },
           { model: Supplier, attributes: ['supplier_id', 'name'] }
         ],
         order: [['item_id','DESC']]
@@ -66,7 +66,7 @@ const inventoryController = {
       const item = await InventoryItem.findByPk(id, { 
         include: [
           { model: Employee, as: 'addedBy', attributes: ['emp_id','emp_name'] },
-          { model: Category, attributes: ['category_id', 'name'] },
+          { model: Category, as: 'category', attributes: ['category_id', 'name'] },
           { model: Supplier, attributes: ['supplier_id', 'name', 'contact_person', 'email', 'phone'] }
         ] 
       });
@@ -108,26 +108,20 @@ const inventoryController = {
   // Get low stock items
   async getLowStockItems(req, res) {
     try {
-      const { page = 1, limit = 50 } = req.query;
-      const offset = (page - 1) * limit;
-
-      const { count, rows } = await InventoryItem.findAndCountAll({
+      const { limit = 100 } = req.query;
+      const items = await InventoryItem.findAll({
         where: {
-          [Op.and]: [
-            sequelize.where(sequelize.col('quantity'), Op.lte, sequelize.col('minimum_stock_level')),
-            { status: 'active' }
-          ]
+          quantity: { [Op.lt]: sequelize.col('minimum_stock_level') },
+          status: 'active'
         },
-        limit: parseInt(limit),
-        offset: parseInt(offset),
         include: [
-          { model: Category, attributes: ['category_id', 'name'] },
-          { model: Supplier, attributes: ['supplier_id', 'name'] }
+          { model: Category, as: 'category', attributes: ['name'] },
+          { model: Supplier, attributes: ['name'] }
         ],
-        order: [['quantity','ASC']]
+        limit: parseInt(limit),
+        order: [['quantity', 'ASC']]
       });
-
-      return res.status(200).json({ success: true, data: rows, pagination: { total: count, page: parseInt(page), limit: parseInt(limit) } });
+      return res.status(200).json({ success: true, data: items });
     } catch (error) {
       console.error('Error fetching low stock items', error);
       return res.status(500).json({ success: false, message: 'Failed to fetch low stock items', error: error.message });
@@ -137,23 +131,20 @@ const inventoryController = {
   // Get expired items
   async getExpiredItems(req, res) {
     try {
-      const { page = 1, limit = 50 } = req.query;
-      const offset = (page - 1) * limit;
-
-      const { count, rows } = await InventoryItem.findAndCountAll({
+      const { limit = 100 } = req.query;
+      const items = await InventoryItem.findAll({
         where: {
-          expiry_date: { [Op.lte]: new Date() },
+          expiry_date: { [Op.lt]: new Date() },
           status: 'active'
         },
-        limit: parseInt(limit),
-        offset: parseInt(offset),
         include: [
-          { model: Category, attributes: ['category_id', 'name'] }
+          { model: Category, as: 'category', attributes: ['name'] },
+          { model: Supplier, attributes: ['name'] }
         ],
-        order: [['expiry_date','ASC']]
+        limit: parseInt(limit),
+        order: [['expiry_date', 'ASC']]
       });
-
-      return res.status(200).json({ success: true, data: rows, pagination: { total: count, page: parseInt(page), limit: parseInt(limit) } });
+      return res.status(200).json({ success: true, data: items });
     } catch (error) {
       console.error('Error fetching expired items', error);
       return res.status(500).json({ success: false, message: 'Failed to fetch expired items', error: error.message });
@@ -205,31 +196,29 @@ const inventoryController = {
       const activeItems = await InventoryItem.count({ where: { status: 'active' } });
       const lowStockItems = await InventoryItem.count({
         where: {
-          [Op.and]: [
-            sequelize.where(sequelize.col('quantity'), Op.lte, sequelize.col('minimum_stock_level')),
-            { status: 'active' }
-          ]
+          quantity: { [Op.lt]: sequelize.col('minimum_stock_level') },
+          status: 'active'
         }
       });
       const expiredItems = await InventoryItem.count({
-        where: { expiry_date: { [Op.lte]: new Date() } }
+        where: {
+          expiry_date: { [Op.lt]: new Date() },
+          status: 'active'
+        }
       });
-      
-      const totalValue = await InventoryItem.sum('unit_price');
 
-      return res.status(200).json({ 
-        success: true, 
-        data: { 
-          totalItems, 
-          activeItems, 
-          lowStockItems, 
-          expiredItems,
-          totalValue: totalValue || 0
-        } 
-      });
+      const stats = {
+        totalItems,
+        activeItems,
+        lowStockItems,
+        expiredItems,
+        outOfStockItems: await InventoryItem.count({ where: { quantity: 0, status: 'active' } })
+      };
+
+      return res.status(200).json({ success: true, data: stats });
     } catch (error) {
       console.error('Error fetching inventory stats', error);
-      return res.status(500).json({ success: false, message: 'Failed to fetch stats', error: error.message });
+      return res.status(500).json({ success: false, message: 'Failed to fetch inventory stats', error: error.message });
     }
   }
 };
