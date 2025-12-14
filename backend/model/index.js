@@ -12,6 +12,13 @@ const SpecialEvent = require("./SpecialEvent");
 const Attendance = require("./Attendance");
 const Trade = require("./Trade");
 const SubjectTrade = require("./SubjectTrade");
+const Employee = require("./Employee");
+const Inventory = require("./Inventory");
+const Category = require("./Category");
+const Supplier = require("./Supplier");
+const Warehouse = require("./Warehouse");
+const RequestAsset = require("./RequestAsset");
+const TransactionReport = require("./TransactionReport");
 
 // Define Associations
 
