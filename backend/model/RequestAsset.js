@@ -32,7 +32,7 @@ const RequestAsset = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: "employee",
+        model: "Employee",
         key: "emp_id",
       },
     },
@@ -40,7 +40,7 @@ const RequestAsset = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: true,
       references: {
-        model: "employee",
+        model: "Employee",
         key: "emp_id",
       },
     },

@@ -15,6 +15,12 @@ const subjectRoutes = require("./routes/subject/subjectRoutes");
 const timetableRoutes = require("./routes/timetable/timetableRoutes");
 const timetableEntryRoutes = require("./routes/timetableEntry/timetableEntryRoutes");
 const tradeRoutes = require("./routes/trade/tradeRoutes");
+const categoryRoutes = require("./routes/inventory/categoryRoutes");
+const supplierRoutes = require("./routes/inventory/supplierRoutes");
+const inventoryRoutes = require("./routes/inventory/inventoryRoutes");
+const warehouseRoutes = require("./routes/inventory/warehouseRoutes");
+const transactionReportRoutes = require("./routes/inventory/transactionReportRoutes");
+const requestAssetRoutes = require("./routes/inventory/requestAssetRoutes");
 
 const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
@@ -47,6 +53,12 @@ app.use("/api/subject", subjectRoutes);
 app.use("/api/timetable", timetableRoutes);
 app.use("/api/timetable-entry", timetableEntryRoutes);
 app.use("/api/trade", tradeRoutes);
+app.use("/api/inventory", inventoryRoutes);
+app.use("/api/category", categoryRoutes);
+app.use("/api/supplier", supplierRoutes);
+app.use("/api/warehouse", warehouseRoutes);
+app.use("/api/requestAsset", requestAssetRoutes);
+app.use("/api/transactionReport", transactionReportRoutes);
 
 /* ✅ Health check */
 app.get("/", (req, res) => {
@@ -64,7 +76,7 @@ app.use((err, req, res, next) => {
 
 /* ✅ Start server */
 db.sequelize
-  .sync({ alter: false })
+  .sync({ alter: false, force: false })
   .then(() => {
     console.log("Database synchronized");
     app.listen(PORT, () => {

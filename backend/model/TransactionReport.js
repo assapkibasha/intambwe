@@ -9,30 +9,22 @@ const TransactionReport = sequelize.define(
       primaryKey: true,
       autoIncrement: true,
     },
+
     inventory_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      references: {
-        model: "inventory",
-        key: "inventory_id",
-      },
     },
-    request_Id: {
+
+    request_id: {
       type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: "RequestAsset",
-        key: "request_id",
-      },
+      allowNull: true,
     },
+
     performed_by: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      references: {
-        model: "Employee",
-        key: "emp_id",
-      },
     },
+
     transaction_date: {
       type: DataTypes.DATE,
       allowNull: false,

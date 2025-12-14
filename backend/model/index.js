@@ -12,7 +12,6 @@ const SpecialEvent = require("./SpecialEvent");
 const Attendance = require("./Attendance");
 const Trade = require("./Trade");
 const SubjectTrade = require("./SubjectTrade");
-const Employee = require("./Employee");
 const Inventory = require("./Inventory");
 const Category = require("./Category");
 const Supplier = require("./Supplier");
@@ -126,6 +125,125 @@ Attendance.belongsTo(Student, { foreignKey: "student_id" });
 Attendance.belongsTo(Class, { foreignKey: "class_id" });
 Attendance.belongsTo(Subject, { foreignKey: "subject_id" });
 
+/* =========================
+   CATEGORY
+========================= */
+Category.hasMany(Inventory, {
+  foreignKey: "category_id",
+  as: "inventories",
+  onDelete: "RESTRICT",
+});
+
+Inventory.belongsTo(Category, {
+  foreignKey: "category_id",
+  as: "category",
+});
+
+/* =========================
+   SUPPLIER
+========================= */
+Supplier.hasMany(Inventory, {
+  foreignKey: "supplier_id",
+  as: "inventories",
+  onDelete: "RESTRICT",
+});
+
+Inventory.belongsTo(Supplier, {
+  foreignKey: "supplier_id",
+  as: "supplier",
+});
+
+/* =========================
+   WAREHOUSE
+========================= */
+Warehouse.hasMany(Inventory, {
+  foreignKey: "warehouse_id",
+  as: "inventories",
+  onDelete: "RESTRICT",
+});
+
+Inventory.belongsTo(Warehouse, {
+  foreignKey: "warehouse_id",
+  as: "warehouse",
+});
+
+/* =========================
+   INVENTORY
+========================= */
+Inventory.hasMany(RequestAsset, {
+  foreignKey: "inventory_id",
+  as: "requests",
+  onDelete: "CASCADE",
+});
+
+RequestAsset.belongsTo(Inventory, {
+  foreignKey: "inventory_id",
+  as: "inventory",
+});
+
+/* =========================
+   REQUEST ASSET
+========================= */
+
+// Requested by (Employee)
+Employee.hasMany(RequestAsset, {
+  foreignKey: "requested_by",
+  as: "assetRequests",
+});
+
+RequestAsset.belongsTo(Employee, {
+  foreignKey: "requested_by",
+  as: "requester",
+});
+
+// Approved by (Employee)
+Employee.hasMany(RequestAsset, {
+  foreignKey: "approved_by",
+  as: "approvedRequests",
+});
+
+RequestAsset.belongsTo(Employee, {
+  foreignKey: "approved_by",
+  as: "approver",
+});
+
+/* =========================
+   TRANSACTION REPORT
+========================= */
+
+// Inventory → TransactionReport
+Inventory.hasMany(TransactionReport, {
+  foreignKey: "inventory_id",
+  as: "transactions",
+});
+
+TransactionReport.belongsTo(Inventory, {
+  foreignKey: "inventory_id",
+  as: "inventory",
+});
+
+// RequestAsset → TransactionReport
+RequestAsset.hasMany(TransactionReport, {
+  foreignKey: "request_id",
+  as: "transactions",
+});
+
+TransactionReport.belongsTo(RequestAsset, {
+  foreignKey: "request_id",
+  as: "request",
+});
+
+// Employee → TransactionReport (performed_by)
+Employee.hasMany(TransactionReport, {
+  foreignKey: "performed_by",
+  as: "performedTransactions",
+});
+
+TransactionReport.belongsTo(Employee, {
+  foreignKey: "performed_by",
+  as: "performedBy",
+});
+
 // Sync database
 const syncDatabase = async () => {
   try {
@@ -154,6 +272,12 @@ module.exports = {
   SpecialEvent,
   Attendance,
   SubjectTrade,
-  syncDatabase,
   Trade,
+  Inventory,
+  Category,
+  Supplier,
+  Warehouse,
+  RequestAsset,
+  TransactionReport,
+  syncDatabase,
 };

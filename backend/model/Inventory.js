@@ -51,7 +51,7 @@ const Inventory = sequelize.define(
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
-        model: "Warehouse",
+        model: "warehouses",
         key: "warehouse_id",
       },
     },
