@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import studentService from '../..//services/studentService';
-import marksService from '../../services/marksService';
-import classService from '../../services/classService';
+import studentService from '../../services/studentService';
+import api from '../../api/api';
 
 const TraineeAssessmentReport = () => {
   const [students, setStudents] = useState([]);
@@ -41,23 +40,24 @@ const TraineeAssessmentReport = () => {
     setError(null);
 
     try {
-      // Fetch student details
-      const studentResponse = await studentService.getStudentById(selectedStudentId);
-      const student = studentResponse.data || studentResponse;
+      // Use the comprehensive report endpoint with semester rankings
+      const response = await api.get(
+        `/report/student/${selectedStudentId}/assessment?ac_year=${academicYear}`
+      );
 
-      // Fetch student transcript (marks)
-      const transcriptResponse = await marksService.getStudentTranscript(selectedStudentId, {
-        ac_year: academicYear
-      });
-      const marks = transcriptResponse.data || transcriptResponse;
+      const result = response.data;
+      const data = result.data;
 
-      // Process marks data
-      const processedMarks = processMarksData(marks);
-
+      // Set report data with all processed information from backend
       setReportData({
-        student: student,
-        subjects: processedMarks
+        student: data.student,
+        subjects: data.subjects,
+        semesterResults: data.semesterResults || [],
+        overallStatistics: data.overallStatistics,
+        overallRanking: data.overallRanking,
+        categories: data.categories
       });
+
     } catch (err) {
       setError('Failed to load report: ' + err.message);
       console.error(err);
@@ -66,95 +66,68 @@ const TraineeAssessmentReport = () => {
     }
   };
 
-  // Process marks data by subject and term
-  const processMarksData = (marks) => {
-    const subjectMap = new Map();
-    
-    if (!marks || marks.length === 0) return [];
-
-    marks.forEach(mark => {
-      const subject = mark.Subject;
-      if (!subject) return;
-
-      const key = subject.sbj_code;
-      
-      if (!subjectMap.has(key)) {
-        subjectMap.set(key, {
-          code: subject.sbj_code,
-          title: subject.sbj_name,
-          credits: subject.sbj_credit,
-          category: subject.category_type || 'GENERAL',
-          terms: {}
-        });
-      }
-      
-      const subjectData = subjectMap.get(key);
-      const termKey = mark.semester?.replace('Semester ', '') || '1';
-      
-      // Calculate FA (average of Formative Assessments normalized to 100%)
-      let fa = 0;
-      if (mark.FA && Array.isArray(mark.FA) && mark.FA.length > 0) {
-        // Normalize each assessment to 100% then average
-        const normalizedScores = mark.FA.map(assessment => {
-          const score = parseFloat(assessment.score) || 0;
-          const maxScore = parseFloat(assessment.maxScore) || 1;
-          return (score / maxScore) * 100;
-        });
-        fa = (normalizedScores.reduce((sum, score) => sum + score, 0) / normalizedScores.length).toFixed(2);
-      }
-      
-      // Calculate LA (average of Integrated Assessments normalized to 100%)
-      let la = 0;
-      if (mark.IA && Array.isArray(mark.IA) && mark.IA.length > 0) {
-        // Normalize each assessment to 100% then average
-        const normalizedScores = mark.IA.map(assessment => {
-          const score = parseFloat(assessment.score) || 0;
-          const maxScore = parseFloat(assessment.maxScore) || 1;
-          return (score / maxScore) * 100;
-        });
-        la = (normalizedScores.reduce((sum, score) => sum + score, 0) / normalizedScores.length).toFixed(2);
-      }
-      
-      // CA normalized to 100%
-      let ca = 0;
-      const caScore = parseFloat(mark.CA_score || 0);
-      const caMaxScore = parseFloat(mark.CA_maxScore || 1);
-      if (caMaxScore > 0) {
-        ca = ((caScore / caMaxScore) * 100).toFixed(2);
-      }
-      
-      // Calculate total (FA + LA + CA) - all already on 100% scale, so just average them
-      const total = ((parseFloat(fa) + parseFloat(la) + parseFloat(ca)) / 3).toFixed(2);
-      
-      subjectData.terms[termKey] = { fa, la, ca, avg: total };
-    });
-
-    return Array.from(subjectMap.values());
-  };
-
   const calculateAnnualAverage = (terms) => {
     const values = Object.values(terms).map(t => parseFloat(t.avg));
     if (values.length === 0) return '0.00';
     return (values.reduce((a, b) => a + b, 0) / values.length).toFixed(2);
   };
 
-  const categorizeSubjects = (subjects) => {
-    const coreSpecific = subjects.filter(s => s.category === 'CORE');
-    const coreGeneral = subjects.filter(s => s.category === 'GENERAL');
-    const complementary = subjects.filter(s => s.category === 'COMPLEMENTARY');
-    return { coreSpecific, coreGeneral, complementary };
+  const getAllSubjects = () => {
+    const { coreSpecific, coreGeneral, complementary } = getCategories();
+    return [...coreSpecific, ...coreGeneral, ...complementary];
+  };
+
+
+  const calculateSemesterColumnTotals = (semesterName) => {
+    const subjects = getAllSubjects();
+
+    const totals = {
+      fa: 0,
+      la: 0,
+      ca: 0,
+      avg: 0
+    };
+
+    subjects.forEach(subject => {
+      const term = subject.terms?.[semesterName];
+      if (!term) return;
+
+      totals.fa += parseFloat(term.fa || 0);
+      totals.la += parseFloat(term.la || 0);
+      totals.ca += parseFloat(term.ca || 0);
+      totals.avg += parseFloat(term.avg || 0);
+    });
+
+    return {
+      fa: totals.fa.toFixed(2),
+      la: totals.la.toFixed(2),
+      ca: totals.ca.toFixed(2),
+      avg: totals.avg.toFixed(2)
+    };
+  };
+
+
+  const getSemesterResult = (semesterName) => {
+    if (!reportData?.semesterResults) return null;
+    return reportData.semesterResults.find(sr => sr.semester === semesterName);
   };
 
   const handlePrint = () => {
     window.print();
   };
 
+  // Safe accessors for data
+  const getSubjects = () => reportData?.subjects || [];
+  const getCategories = () => reportData?.categories || { coreSpecific: [], coreGeneral: [], complementary: [] };
+  const getOverallStats = () => reportData?.overallStatistics || { totalMarks: 0, overallAverage: 0, totalCredits: 0 };
+  const getOverallRanking = () => reportData?.overallRanking || { position: null, totalStudents: 0, percentile: 0 };
+
   if (!reportData) {
     return (
       <div className="p-8 bg-gray-50 min-h-screen">
         <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-8">
           <h2 className="text-2xl font-bold mb-6">Load Student Assessment Report</h2>
-          
+
           {error && (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
               {error}
@@ -189,7 +162,7 @@ const TraineeAssessmentReport = () => {
                 className="border border-gray-300 rounded px-4 py-2 w-full"
                 value={academicYear}
                 onChange={(e) => setAcademicYear(e.target.value)}
-                placeholder="e.g., 2023/24"
+                placeholder="e.g., 2024/2025"
               />
             </div>
 
@@ -206,8 +179,15 @@ const TraineeAssessmentReport = () => {
     );
   }
 
-  const { coreSpecific, coreGeneral, complementary } = categorizeSubjects(reportData.subjects);
+  const { coreSpecific, coreGeneral, complementary } = getCategories();
   const student = reportData.student;
+  const overallStats = getOverallStats();
+  const overallRanking = getOverallRanking();
+
+  // Get semester results
+  const semester1Result = getSemesterResult('Semester 1');
+  const semester2Result = getSemesterResult('Semester 2');
+  const semester3Result = getSemesterResult('Semester 3');
 
   return (
     <div className="bg-white p-4">
@@ -255,7 +235,7 @@ const TraineeAssessmentReport = () => {
             <div><span className="font-bold">E-mail:</span> intangotss@gmail.com</div>
             <div><span className="font-bold">Website:</span> www.intangotss.rw</div>
           </div>
-          
+
           <div className="border-r border-black p-3 flex flex-col items-center justify-center">
             <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center">
               <div className="text-white text-2xl font-bold">🔧</div>
@@ -263,7 +243,7 @@ const TraineeAssessmentReport = () => {
             <div className="text-[8px] font-bold mt-1 text-center">Intango Technical Secondary School</div>
             <div className="text-[7px] text-center">Skills Development School</div>
           </div>
-          
+
           <div className="p-3 text-xs">
             <div><span className="font-bold">YEAR:</span> {academicYear}</div>
             <div className="mt-1"><span className="font-bold">CLASS:</span> {student.Class?.class_name || 'N/A'}</div>
@@ -287,7 +267,7 @@ const TraineeAssessmentReport = () => {
             <div className="p-1.5"></div>
           </div>
         </div>
-        
+
         <div className="border-b border-black">
           <div className="grid grid-cols-4 text-[10px]">
             <div className="border-r border-black p-1.5">
@@ -302,24 +282,61 @@ const TraineeAssessmentReport = () => {
 
         {/* Assessment Legend */}
         <div className="border-b border-black p-1.5 text-[9px]">
-          <span className="font-bold">F.A:</span> Formative Assessment | 
-          <span className="font-bold"> LA:</span> Integrated Assessment | 
-          <span className="font-bold"> C.A:</span> Comprehensive Assessment | 
-          <span className="font-bold"> AVG:</span> Average | 
+          <span className="font-bold">F.A:</span> Formative Assessment |
+          <span className="font-bold"> LA:</span> Integrated Assessment |
+          <span className="font-bold"> C.A:</span> Comprehensive Assessment |
+          <span className="font-bold"> AVG:</span> Average |
           <span className="font-bold"> A.A:</span> Annual Average
         </div>
 
         {/* Main Assessment Table */}
         <table className="w-full border-collapse text-[9px]">
+
+
+
           <thead>
+    {/* Percentage Row */}
+                <tr className="bg-gray-100 font-bold">
+                  <td colSpan="4" className="border border-black p-2 text-left"></td>
+                  <td className="border  border-black p-2 text-center">MAX</td>
+
+                   <th colSpan="4" className="border border-black p-0.5 bg-gray-100">1st Term</th>
+              <th colSpan="4" className="border border-black p-0.5 bg-gray-100">2nd Term</th>
+              <th colSpan="4" className="border border-black p-0.5 bg-gray-100">3rd Term</th>
+              <th  className="border border-black p-1 bg-gray-100">A.A<br />(%)</th>
+                  {/* Overall Average Percentage */}
+                 
+                </tr>
+
+               
+    {/* Percentage Row */}
+                <tr className="bg-gray-100 font-bold">
+                  <td colSpan="4" className="border border-black p-2 text-left">PERCENTAGE (%)</td>
+                  <td className="border  border-black p-2 text-center">100%</td>
+
+                  <td colSpan="4" className="border border-black p-2 text-center">
+                    {semester1Result ? `${semester1Result.percentage}%` : '-'}
+                  </td>
+                  {/* Semester 2 Percentage */}
+
+                  <td colSpan="4" className="border border-black p-2 text-center">
+                    {semester2Result ? `${semester2Result.percentage}%` : '-'}
+                  </td>
+                  {/* Semester 3 Percentage */}
+
+                  <td colSpan="4" className="border border-black p-2 text-center">
+                    {semester3Result ? `${semester3Result.percentage}%` : '-'}
+                  </td>
+                  {/* Overall Average Percentage */}
+                  <td className="border border-black p-2 text-center">{overallStats.overallAverage}%</td>
+                </tr>
+
+               
             <tr>
               <th colSpan="3" rowSpan="2" className="border border-black p-1 bg-gray-100">Module Code</th>
               <th rowSpan="2" className="border border-black p-1 bg-gray-100">Competence Title</th>
               <th rowSpan="2" className="border border-black p-1 bg-gray-100">Credits</th>
-              <th colSpan="4" className="border border-black p-0.5 bg-gray-100">1st Term</th>
-              <th colSpan="4" className="border border-black p-0.5 bg-gray-100">2nd Term</th>
-              <th colSpan="4" className="border border-black p-0.5 bg-gray-100">3rd Term</th>
-              <th rowSpan="2" className="border border-black p-1 bg-gray-100">A.A<br/>(%)</th>
+           
             </tr>
             <tr className="bg-gray-100">
               {['F.A', 'LA', 'C.A', 'AVG', 'F.A', 'LA', 'C.A', 'AVG', 'F.A', 'LA', 'C.A', 'AVG'].map((label, idx) => (
@@ -339,7 +356,7 @@ const TraineeAssessmentReport = () => {
                     <td colSpan="3" className="border border-black p-1">{item.code}</td>
                     <td className="border border-black p-1">{item.title}</td>
                     <td className="border border-black p-1 text-center">{item.credits}</td>
-                    {['1', '2', '3'].map(term => {
+                    {['Semester 1', 'Semester 2', 'Semester 3'].map(term => {
                       const termData = item.terms[term] || {};
                       return (
                         <React.Fragment key={term}>
@@ -367,7 +384,7 @@ const TraineeAssessmentReport = () => {
                     <td colSpan="3" className="border border-black p-1">{item.code}</td>
                     <td className="border border-black p-1">{item.title}</td>
                     <td className="border border-black p-1 text-center">{item.credits}</td>
-                    {['1', '2', '3'].map(term => {
+                    {['Semester 1', 'Semester 2', 'Semester 3'].map(term => {
                       const termData = item.terms[term] || {};
                       return (
                         <React.Fragment key={term}>
@@ -395,7 +412,7 @@ const TraineeAssessmentReport = () => {
                     <td colSpan="3" className="border border-black p-1">{item.code}</td>
                     <td className="border border-black p-1">{item.title}</td>
                     <td className="border border-black p-1 text-center">{item.credits}</td>
-                    {['1', '2', '3'].map(term => {
+                    {['Semester 1', 'Semester 2', 'Semester 3'].map(term => {
                       const termData = item.terms[term] || {};
                       return (
                         <React.Fragment key={term}>
@@ -412,26 +429,135 @@ const TraineeAssessmentReport = () => {
               </>
             )}
 
-            {reportData.subjects.length === 0 && (
+            {getSubjects().length === 0 && (
               <tr>
                 <td colSpan="18" className="border border-black p-4 text-center text-gray-500">
                   No assessment data available for this student
                 </td>
               </tr>
             )}
+
+            {/* Term Totals Row - Individual Column Totals */}
+            {getSubjects().length > 0 && (
+              <>
+                <tr className="bg-blue-100 font-bold">
+                  <td colSpan="4" className="border border-black p-2 text-left">TOTAL</td>
+                  <td className="border border-black p-2 text-center"></td>
+                  {/* Semester 1 Totals */}
+                  {
+                    ['Semester 1', 'Semester 2', 'Semester 3'].map(term => {
+
+                      const semesterTotals = calculateSemesterColumnTotals(term);
+
+                      return (
+                        <>
+
+                          <td className="border border-black p-2 text-center">
+                            {semesterTotals.fa ? semesterTotals.fa : '-'}
+                          </td>
+                          <td className="border border-black p-2 text-center">{semesterTotals.la ? semesterTotals.la : '-'}</td>
+                          <td className="border border-black p-2 text-center">{semesterTotals.ca ? semesterTotals.ca : '-'}</td>
+                          <td className="border border-black p-2 text-center">
+                            {semesterTotals.avg ? semesterTotals.avg : '-'}
+                          </td>
+
+
+                        </>
+
+                      )
+                    })
+                  }
+
+                  {/* Annual Average Total */}
+                  <td className="border border-black p-2 text-center">{overallStats.totalMarks}</td>
+                </tr>
+
+                {/* Percentage Row */}
+               
+                {/* Position Row */}
+                <tr className="bg-yellow-100 font-bold">
+                  <td colSpan="4" className="border border-black p-2 text-left">POSITION</td>
+                  <td className="border border-black p-2 text-center"></td>
+                  {/* Semester 1 Position */}
+          
+                  <td  colSpan="4"  className="border border-black p-2 text-center">
+                    {semester1Result && semester1Result.ranking.position
+                      ? `${semester1Result.ranking.position} out of ${semester1Result.ranking.totalStudents}`
+                      : 'N/A'}
+                  </td>
+                  {/* Semester 2 Position */}
+                
+                  <td  colSpan="4"  className="border border-black p-2 text-center">
+                    {semester2Result && semester2Result.ranking.position
+                      ? `${semester2Result.ranking.position} out of ${semester2Result.ranking.totalStudents}`
+                      : 'N/A'}
+                  </td>
+                  {/* Semester 3 Position */}
+               
+                  <td  colSpan="4"  className="border border-black p-2 text-center">
+                    {semester3Result && semester3Result.ranking.position
+                      ? `${semester3Result.ranking.position} out of ${semester3Result.ranking.totalStudents}`
+                      : 'N/A'}
+                  </td>
+                  {/* Overall Position */}
+                  <td className="border border-black p-2 text-center">
+                    {overallRanking.position ? `${overallRanking.position} out of ${overallRanking.totalStudents}` : 'N/A'}
+                  </td>
+                </tr>
+              </>
+            )}
+
+            {/*  Class Trainer's Comments & Signature */}
+                <tr className=" bg-white font-bold">
+                  <td colSpan="4" className="border border-black p-2 text-left">Class Trainer's Comments & Signature</td>
+                  <td className="border border-black p-2 text-center"></td>
+                  {/* Semester 1 Position */}
+          
+                  <td  colSpan="4"  className="border border-black p-2 text-center">
+                    
+                  </td>
+                  {/* Semester 2 Position */}
+                
+                  <td  colSpan="4"  className="border border-black p-2 text-center">
+                  
+                  </td>
+                  {/* Semester 3 Position */}
+               
+                  <td  colSpan="4"  className="border border-black p-2 text-center">
+
+                  </td>
+                  {/* Overall Position */}
+                  <td className="border border-black p-2 text-center">
+                   
+                  </td>
+                </tr>
+                <tr className=" bg-white font-bold">
+                  <td colSpan="4" className="border border-black p-2 text-left">Parents signature</td>
+                  <td className="border border-black p-2 text-center"></td>
+                  {/* Semester 1 Position */}
+          
+                  <td  colSpan="4"  className="border border-black p-2 text-center">
+                    
+                  </td>
+                  {/* Semester 2 Position */}
+                
+                  <td  colSpan="4"  className="border border-black p-2 text-center">
+                  
+                  </td>
+                  {/* Semester 3 Position */}
+               
+                  <td  colSpan="4"  className="border border-black p-2 text-center">
+
+                  </td>
+                  {/* Overall Position */}
+                  <td className="border border-black p-2 text-center">
+                   
+                  </td>
+                </tr>
           </tbody>
         </table>
 
-        {/* Comments Section */}
-        <div className="border-t border-black p-2">
-          <div className="font-bold text-xs mb-1">Class Trainer's Comments & Signature</div>
-          <div className="border border-gray-400 h-16"></div>
-        </div>
-
-        <div className="border-t border-black p-2">
-          <div className="font-bold text-xs mb-1">Parents signature</div>
-          <div className="border border-gray-400 h-12"></div>
-        </div>
+      
 
         {/* Deliberation Table */}
         <div className="border-t border-black">
@@ -444,7 +570,7 @@ const TraineeAssessmentReport = () => {
                 <th className="border border-black p-2 font-bold">Promoted after re-assessment</th>
                 <th className="border border-black p-2 font-bold">Advised to Repeat</th>
                 <th className="border border-black p-2 font-bold">Dismissed</th>
-                <th className="border border-black p-2 font-bold">School Manager<br/>MURANGWA Annable<br/>SIGNATURE<br/>____/____/2024</th>
+                <th className="border border-black p-2 font-bold">School Manager<br />MURANGWA Annable<br />SIGNATURE<br />____/____/2024</th>
               </tr>
             </thead>
             <tbody>

@@ -19,6 +19,7 @@ const subjectRoutes = require("./routes/subject/subjectRoutes");
 const timetableRoutes = require("./routes/timetable/timetableRoutes");
 const timetableEntryRoutes = require("./routes/timetableEntry/timetableEntryRoutes");
 const tradeRoutes = require("./routes/trade/tradeRoutes");
+const reportRoutes = require("./routes/report/reportRoute");
 
 
 // ✅ Correct path for assessment route
@@ -53,6 +54,7 @@ app.use("/api/subject", subjectRoutes);
 app.use("/api/timetable", timetableRoutes);
 app.use("/api/timetable-entry", timetableEntryRoutes);
 app.use("/api/trade", tradeRoutes);
+app.use("/api/report", reportRoutes);
 app.use("/api/assessment", assessmentRoutes);
 
 /* Health Check Route */
