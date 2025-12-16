@@ -1,4 +1,4 @@
-const { Marks, Student, Subject, Class, Trade, Employee } = require('../../model');
+const { Marks, Student, Subject, Class, Trade, Employee, ClassSubject } = require('../../model');
 const { Op } = require('sequelize');
 
 const reportController = {
@@ -60,12 +60,20 @@ const reportController = {
           std_id: std_id,
           ac_year: ac_year
         },
-        include: [
-          { 
-            model: Subject,
-            attributes: ['sbj_id', 'sbj_code', 'sbj_name', 'sbj_credit', 'category_type']
-          }
-        ],
+   include: [
+  { 
+    model: Subject,
+    attributes: ['sbj_id', 'sbj_code', 'sbj_name', 'category_type'],
+    include: [
+      {
+        model: ClassSubject,
+        attributes: ['credit', 'total_max'],
+        where: student.class_id ? { class_id: student.class_id } : undefined,
+        required: false
+      }
+    ]
+  }
+],
         order: [['semester', 'ASC']]
       });
 
@@ -192,12 +200,21 @@ const reportController = {
             std_id: student.std_id,
             ac_year: ac_year
           },
-          include: [
-            { 
-              model: Subject,
-              attributes: ['sbj_id', 'sbj_code', 'sbj_name', 'sbj_credit', 'category_type']
-            }
-          ]
+         
+include: [
+  { 
+    model: Subject,
+    attributes: ['sbj_id', 'sbj_code', 'sbj_name', 'category_type'],
+    include: [
+      {
+        model: ClassSubject,
+        attributes: ['credit', 'total_max'],
+        where: student.class_id ? { class_id: student.class_id } : undefined,
+        required: false
+      }
+    ]
+  }
+]
         });
 
         const processedSubjects = processStudentMarks(marks);
@@ -248,71 +265,7 @@ const reportController = {
 };
 
 // Helper function to process student marks
-function processStudentMarks(marks) {
-  const subjectMap = new Map();
 
-  marks.forEach(mark => {
-    if (!mark.Subject) return;
-
-    const key = mark.Subject.sbj_code;
-
-    if (!subjectMap.has(key)) {
-      subjectMap.set(key, {
-        sbj_id: mark.Subject.sbj_id,
-        code: mark.Subject.sbj_code,
-        title: mark.Subject.sbj_name,
-        credits: mark.Subject.sbj_credit,
-        category: mark.Subject.category_type || 'GENERAL',
-        terms: {}
-      });
-    }
-
-    const subject = subjectMap.get(key);
-    const termKey = mark.semester || 'Semester 1';
-
-    // Calculate FA (Formative Assessment) - normalized to 100%
-    let fa = 0;
-    if (mark.FA && Array.isArray(mark.FA) && mark.FA.length > 0) {
-      const normalizedScores = mark.FA.map(assessment => {
-        const score = parseFloat(assessment.score) || 0;
-        const maxScore = parseFloat(assessment.maxScore) || 1;
-        return (score / maxScore) * 100;
-      });
-      fa = normalizedScores.reduce((sum, score) => sum + score, 0) / normalizedScores.length;
-    }
-
-    // Calculate LA (Integrated Assessment) - normalized to 100%
-    let la = 0;
-    if (mark.IA && Array.isArray(mark.IA) && mark.IA.length > 0) {
-      const normalizedScores = mark.IA.map(assessment => {
-        const score = parseFloat(assessment.score) || 0;
-        const maxScore = parseFloat(assessment.maxScore) || 1;
-        return (score / maxScore) * 100;
-      });
-      la = normalizedScores.reduce((sum, score) => sum + score, 0) / normalizedScores.length;
-    }
-
-    // Calculate CA (Comprehensive Assessment) - normalized to 100%
-    let ca = 0;
-    const caScore = parseFloat(mark.CA_score || 0);
-    const caMaxScore = parseFloat(mark.CA_maxScore || 1);
-    if (caMaxScore > 0) {
-      ca = (caScore / caMaxScore) * 100;
-    }
-
-    // Calculate average for this term (all on 100% scale)
-    const avg = (fa + la + ca) / 3;
-
-    subject.terms[termKey] = {
-      fa: fa.toFixed(2),
-      la: la.toFixed(2),
-      ca: ca.toFixed(2),
-      avg: avg.toFixed(2)
-    };
-  });
-
-  return Array.from(subjectMap.values());
-}
 
 // Helper function to calculate overall statistics
 function calculateOverallStats(subjects) {
@@ -367,12 +320,20 @@ async function calculateSemesterRankings(classStudents, ac_year, current_std_id,
             ac_year: ac_year,
             semester: semester
           },
-          include: [
-            { 
-              model: Subject,
-              attributes: ['sbj_id', 'sbj_code', 'sbj_name', 'sbj_credit', 'category_type']
-            }
-          ]
+   include: [
+  { 
+    model: Subject,
+    attributes: ['sbj_id', 'sbj_code', 'sbj_name', 'category_type'],
+    include: [
+      {
+        model: ClassSubject,
+        attributes: ['credit', 'total_max'],
+        where: student.class_id ? { class_id: student.class_id } : undefined,
+        required: false
+      }
+    ]
+  }
+],
         });
 
         const studentSubjects = processStudentMarks(marks);
@@ -424,21 +385,28 @@ async function calculateSemesterRankings(classStudents, ac_year, current_std_id,
 function processStudentMarks(marks) {
   const subjectMap = new Map();
 
+
+  
+
   marks.forEach(mark => {
     if (!mark.Subject) return;
 
     const key = mark.Subject.sbj_code;
 
-    if (!subjectMap.has(key)) {
-      subjectMap.set(key, {
-        sbj_id: mark.Subject.sbj_id,
-        code: mark.Subject.sbj_code,
-        title: mark.Subject.sbj_name,
-        credits: mark.Subject.sbj_credit,
-        category: mark.Subject.category_type || 'GENERAL',
-        terms: {}
-      });
-    }
+   if (!subjectMap.has(key)) {
+  const classSubject = mark.Subject.ClassSubjects?.[0];
+
+  subjectMap.set(key, {
+    sbj_id: mark.Subject.sbj_id,
+    code: mark.Subject.sbj_code,
+    title: mark.Subject.sbj_name,
+    credits: classSubject ? classSubject.credit : 0,
+    totalMax: classSubject ? classSubject.total_max : 100,
+    category: mark.Subject.category_type || 'GENERAL',
+    terms: {}
+  });
+}
+
 
     const subject = subjectMap.get(key);
     const termKey = mark.semester || 'Semester 1';
@@ -556,12 +524,20 @@ async function calculateClassRanking(classStudents, ac_year, current_std_id, cur
           std_id: student.std_id,
           ac_year: ac_year
         },
-        include: [
-          { 
-            model: Subject,
-            attributes: ['sbj_id', 'sbj_code', 'sbj_name', 'sbj_credit', 'category_type']
-          }
-        ]
+           include: [
+  { 
+    model: Subject,
+    attributes: ['sbj_id', 'sbj_code', 'sbj_name', 'category_type'],
+    include: [
+      {
+        model: ClassSubject,
+        attributes: ['credit', 'total_max'],
+        where: student.class_id ? { class_id: student.class_id } : undefined,
+        required: false
+      }
+    ]
+  }
+],
       });
 
       const processedSubjects = processStudentMarks(marks);

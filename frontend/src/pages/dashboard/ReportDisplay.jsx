@@ -311,8 +311,8 @@ const TraineeAssessmentReport = () => {
                
     {/* Percentage Row */}
                 <tr className="bg-gray-100 font-bold">
-                  <td colSpan="4" className="border border-black p-2 text-left">PERCENTAGE (%)</td>
-                  <td className="border  border-black p-2 text-center">100%</td>
+                  <td colSpan="4" className="border border-black p-2 text-left">Behaviour</td>
+                  <td className="border  border-black p-2 text-center">100</td>
 
                   <td colSpan="4" className="border border-black p-2 text-center">
                     {semester1Result ? `${semester1Result.percentage}%` : '-'}
