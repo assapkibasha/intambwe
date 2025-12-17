@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ChevronDown, ChevronRight, Printer, Download, User } from 'lucide-react';
 import classService from '../../services/classService';
 import studentService from '../../services/studentService';
+import logo from '../../assets/logo.png';
 import api from '../../api/api';
+
 
 const ClassReportsViewer = () => {
   const [classes, setClasses] = useState([]);
@@ -13,6 +16,26 @@ const ClassReportsViewer = () => {
   const [error, setError] = useState(null);
   const [academicYear, setAcademicYear] = useState('2024/2025');
   const [selectedReport, setSelectedReport] = useState(null);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Initialize state from URL params on mount
+
+
+  // Update URL when state changes
+  useEffect(() => {
+    const params = new URLSearchParams();
+
+    if (Object.keys(expandedClasses).length > 0) {
+      params.set('expanded', JSON.stringify(expandedClasses));
+    }
+
+    if (academicYear) {
+      params.set('year', academicYear);
+    }
+
+    navigate(`?${params.toString()}`, { replace: true });
+  }, [expandedClasses, academicYear]);
 
   // Load all classes on mount
   useEffect(() => {
@@ -35,7 +58,7 @@ const ClassReportsViewer = () => {
 
   const toggleClass = async (classId) => {
     const isExpanded = expandedClasses[classId];
-    
+
     setExpandedClasses(prev => ({
       ...prev,
       [classId]: !isExpanded
@@ -69,9 +92,9 @@ const ClassReportsViewer = () => {
   };
 
   const loadStudentReport = async (classId, studentId) => {
-    setLoadingReports(prev => ({ 
-      ...prev, 
-      [`${classId}-${studentId}`]: true 
+    setLoadingReports(prev => ({
+      ...prev,
+      [`${classId}-${studentId}`]: true
     }));
 
     try {
@@ -82,37 +105,65 @@ const ClassReportsViewer = () => {
       const result = response.data;
       const data = result.data;
 
-      // Store the report data
+      // Check if student has any assessment data
+      const hasData = data.subjects && data.subjects.length > 0;
+
+      if (!hasData) {
+        alert('No assessment data available for this student.');
+        // Store a "no report" marker
+        setStudentReports(prev => ({
+          ...prev,
+          [classId]: {
+            ...prev[classId],
+            reports: {
+              ...prev[classId].reports,
+              [studentId]: { noReport: true }
+            }
+          }
+        }));
+      } else {
+        // Store the report data
+        setStudentReports(prev => ({
+          ...prev,
+          [classId]: {
+            ...prev[classId],
+            reports: {
+              ...prev[classId].reports,
+              [studentId]: {
+                student: data.student,
+                subjects: data.subjects,
+                semesterResults: data.semesterResults || [],
+                overallStatistics: data.overallStatistics,
+                overallRanking: data.overallRanking,
+                categories: data.categories
+              }
+            }
+          }
+        }));
+      }
+    } catch (err) {
+      console.error(`Failed to load report for student ${studentId}:`, err);
+      // Mark as no report on error
       setStudentReports(prev => ({
         ...prev,
         [classId]: {
           ...prev[classId],
           reports: {
             ...prev[classId].reports,
-            [studentId]: {
-              student: data.student,
-              subjects: data.subjects,
-              semesterResults: data.semesterResults || [],
-              overallStatistics: data.overallStatistics,
-              overallRanking: data.overallRanking,
-              categories: data.categories
-            }
+            [studentId]: { noReport: true }
           }
         }
       }));
-    } catch (err) {
-      console.error(`Failed to load report for student ${studentId}:`, err);
     } finally {
-      setLoadingReports(prev => ({ 
-        ...prev, 
-        [`${classId}-${studentId}`]: false 
+      setLoadingReports(prev => ({
+        ...prev,
+        [`${classId}-${studentId}`]: false
       }));
     }
   };
-
   const viewFullReport = (classId, studentId) => {
     const report = studentReports[classId]?.reports[studentId];
-    if (report) {
+    if (report && !report.noReport) {
       setSelectedReport(report);
     }
   };
@@ -139,8 +190,8 @@ const ClassReportsViewer = () => {
       })
     };
 
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], { 
-      type: 'application/json' 
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+      type: 'application/json'
     });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -159,8 +210,8 @@ const ClassReportsViewer = () => {
   }
 
   if (selectedReport) {
-    return <TraineeAssessmentReportDisplay 
-      reportData={selectedReport} 
+    return <TraineeAssessmentReportDisplay
+      reportData={selectedReport}
       academicYear={academicYear}
       onBack={() => setSelectedReport(null)}
     />;
@@ -222,12 +273,13 @@ const ClassReportsViewer = () => {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        exportReports(classItem.class_id);
+                        navigate(`/employee/dashboard/class-report/${classItem.class_id}?year=${academicYear}`);
                       }}
                       className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center gap-2"
+                      
                     >
                       <Download className="w-4 h-4" />
-                      Export
+                      All Reports
                     </button>
                   )}
                 </button>
@@ -285,6 +337,10 @@ const ClassReportsViewer = () => {
                                   >
                                     {isLoadingReport ? 'Loading...' : 'Load Report'}
                                   </button>
+                                ) : report.noReport ? (
+                                  <div className="bg-red-100 text-red-700 px-4 py-2 rounded font-medium">
+                                    No Report Available
+                                  </div>
                                 ) : (
                                   <button
                                     onClick={() => viewFullReport(classItem.class_id, student.std_id)}
@@ -322,17 +378,17 @@ const ClassReportsViewer = () => {
 };
 
 // YOUR ORIGINAL REPORT DISPLAY COMPONENT WITH ALL YOUR LOGIC
-const TraineeAssessmentReportDisplay = ({ reportData, academicYear, onBack }) => {
+export const TraineeAssessmentReportDisplay = ({ reportData, academicYear, onBack }) => {
   const calculateAnnualAverage = (terms) => {
     const values = Object.values(terms).map(t => parseFloat(t.avg)).filter(v => !isNaN(v) && v > 0);
     if (values.length === 0) return null;
-    return (values.reduce((a, b) => a + b, 0) / values.length).toFixed(2);
+    return (values.reduce((a, b) => a + b, 0) / values.length).toFixed(1);
   };
 
   const hasAllSemesters = () => {
     const subjects = getAllSubjects();
     if (subjects.length === 0) return false;
-    
+
     return subjects.every(subject => {
       const s1 = subject.terms?.['Semester 1']?.avg;
       const s2 = subject.terms?.['Semester 2']?.avg;
@@ -344,7 +400,7 @@ const TraineeAssessmentReportDisplay = ({ reportData, academicYear, onBack }) =>
   const isCompetent = (value, type) => {
     const mark = parseFloat(value);
     if (isNaN(mark) || mark <= 0) return true;
-    
+
     if (type?.toLowerCase().includes('specific') || type?.toLowerCase().includes('core')) {
       return mark >= 70;
     } else if (type?.toLowerCase().includes('general')) {
@@ -356,7 +412,7 @@ const TraineeAssessmentReportDisplay = ({ reportData, academicYear, onBack }) =>
 
   const getMarkStyle = (value, type) => {
     if (!value || value === '-') return {};
-    
+
     if (!isCompetent(value, type)) {
       return {
         color: 'red',
@@ -369,7 +425,7 @@ const TraineeAssessmentReportDisplay = ({ reportData, academicYear, onBack }) =>
 
   const getObservation = (item, annualAvg, type) => {
     const allSemesters = hasAllSemesters();
-    
+
     if (allSemesters && annualAvg) {
       const avg = parseFloat(annualAvg);
       if (type?.includes('CORE') || type?.toLowerCase().includes('core') || type?.toLowerCase().includes('specific')) {
@@ -384,11 +440,11 @@ const TraineeAssessmentReportDisplay = ({ reportData, academicYear, onBack }) =>
       const s3 = parseFloat(terms['Semester 3']?.avg);
       const s2 = parseFloat(terms['Semester 2']?.avg);
       const s1 = parseFloat(terms['Semester 1']?.avg);
-      
+
       const recentAvg = !isNaN(s3) && s3 > 0 ? s3 : (!isNaN(s2) && s2 > 0 ? s2 : s1);
-      
+
       if (!recentAvg || isNaN(recentAvg)) return '-';
-      
+
       if (type?.includes('CORE') || type?.toLowerCase().includes('core') || type?.toLowerCase().includes('specific')) {
         return recentAvg > 70 ? 'C' : 'NYC';
       } else if (type?.toLowerCase().includes('general')) {
@@ -404,55 +460,55 @@ const TraineeAssessmentReportDisplay = ({ reportData, academicYear, onBack }) =>
     return [...coreSpecific, ...coreGeneral, ...complementary];
   };
 
- const calculateSemesterColumnTotals = (semesterName) => {
-  const subjects = getAllSubjects();
+  const calculateSemesterColumnTotals = (semesterName) => {
+    const subjects = getAllSubjects();
 
-  const totals = {
-    fa: 0,
-    la: 0,
-    ca: 0,
-    avg: 0
+    const totals = {
+      fa: 0,
+      la: 0,
+      ca: 0,
+      avg: 0
+    };
+
+    const hasValue = {
+      fa: false,
+      la: false,
+      ca: false,
+      avg: false
+    };
+
+    subjects.forEach(subject => {
+      const term = subject.terms?.[semesterName];
+      if (!term) return;
+
+      if (term.fa !== null) {
+        totals.fa += Number(term.fa);
+        hasValue.fa = true;
+      }
+
+      if (term.la !== null) {
+        totals.la += Number(term.la);
+        hasValue.la = true;
+      }
+
+      if (term.ca !== null) {
+        totals.ca += Number(term.ca);
+        hasValue.ca = true;
+      }
+
+      if (term.avg !== null) {
+        totals.avg += Number(term.avg);
+        hasValue.avg = true;
+      }
+    });
+
+    return {
+      fa: hasValue.fa ? totals.fa.toFixed(1) : null,
+      la: hasValue.la ? totals.la.toFixed(1) : null,
+      ca: hasValue.ca ? totals.ca.toFixed(1) : null,
+      avg: hasValue.avg ? totals.avg.toFixed(1) : null
+    };
   };
-
-  const hasValue = {
-    fa: false,
-    la: false,
-    ca: false,
-    avg: false
-  };
-
-  subjects.forEach(subject => {
-    const term = subject.terms?.[semesterName];
-    if (!term) return;
-
-    if (term.fa !== null) {
-      totals.fa += Number(term.fa);
-      hasValue.fa = true;
-    }
-
-    if (term.la !== null) {
-      totals.la += Number(term.la);
-      hasValue.la = true;
-    }
-
-    if (term.ca !== null) {
-      totals.ca += Number(term.ca);
-      hasValue.ca = true;
-    }
-
-    if (term.avg !== null) {
-      totals.avg += Number(term.avg);
-      hasValue.avg = true;
-    }
-  });
-
-  return {
-    fa: hasValue.fa ? totals.fa.toFixed(2) : null,
-    la: hasValue.la ? totals.la.toFixed(2) : null,
-    ca: hasValue.ca ? totals.ca.toFixed(2) : null,
-    avg: hasValue.avg ? totals.avg.toFixed(2) : null
-  };
-};
 
 
   const getSemesterResult = (semesterName) => {
@@ -528,11 +584,7 @@ const TraineeAssessmentReportDisplay = ({ reportData, academicYear, onBack }) =>
           </div>
 
           <div className="border-r border-black p-3 flex flex-col items-center justify-center">
-            <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center">
-              <div className="text-white text-2xl font-bold">🔧</div>
-            </div>
-            <div className="text-[8px] font-bold mt-1 text-center">Intango Technical Secondary School</div>
-            <div className="text-[7px] text-center">Skills Development School</div>
+            <img src={logo} className=' h-40' alt="" />
           </div>
 
           <div className="p-3 text-xs">
@@ -578,14 +630,15 @@ const TraineeAssessmentReportDisplay = ({ reportData, academicYear, onBack }) =>
           <span className="font-bold"> C.A:</span> Comprehensive Assessment |
           <span className="font-bold"> AVG:</span> Average |
           <span className="font-bold"> A.A:</span> Annual Average
+          <span className="font-bold"> R.E:</span> Re-Assessment
         </div>
 
         {/* Main Assessment Table */}
         <table className="w-full border-collapse text-[9px]">
           <thead>
             <tr className="bg-gray-100 font-bold">
-              <td colSpan="4" className="border border-black p-2 text-left"></td>
-              <td className="border border-black p-2 text-center">MAX</td>
+              <td colSpan="4" className="border border-black p-1 text-left"></td>
+              <td className="border border-black p-1 text-center">MAX</td>
 
               <th colSpan="4" className="border border-black p-0.5 bg-gray-100">1st Term</th>
               <th colSpan="4" className="border border-black p-0.5 bg-gray-100">2nd Term</th>
@@ -594,22 +647,22 @@ const TraineeAssessmentReportDisplay = ({ reportData, academicYear, onBack }) =>
             </tr>
 
             <tr className="bg-gray-100 font-bold">
-              <td colSpan="4" className="border border-black p-2 text-left">Behaviour</td>
-              <td className="border border-black p-2 text-center">100</td>
+              <td colSpan="4" className="border border-black p-1 text-left">Behaviour</td>
+              <td className="border border-black p-1 text-center">100</td>
 
-              <td colSpan="4" className="border border-black p-2 text-center">
+              <td colSpan="4" className="border border-black p-1 text-center">
                 {semester1Result ? `${semester1Result.percentage}%` : '-'}
               </td>
 
-              <td colSpan="4" className="border border-black p-2 text-center">
+              <td colSpan="4" className="border border-black p-1 text-center">
                 {semester2Result ? `${semester2Result.percentage}%` : '-'}
               </td>
 
-              <td colSpan="4" className="border border-black p-2 text-center">
+              <td colSpan="4" className="border border-black p-1 text-center">
                 {semester3Result ? `${semester3Result.percentage}%` : '-'}
               </td>
 
-              <td colSpan="3" className="border border-black p-2 text-center">
+              <td colSpan="3" className="border border-black p-1 text-center">
                 {allSemestersComplete ? `${overallStats.overallAverage}%` : '-'}
               </td>
             </tr>
@@ -620,7 +673,7 @@ const TraineeAssessmentReportDisplay = ({ reportData, academicYear, onBack }) =>
               <th rowSpan="2" className="border border-black p-1 bg-gray-100">Credits</th>
             </tr>
             <tr className="bg-gray-100">
-              {['F.A', 'LA', 'C.A', 'AVG', 'F.A', 'LA', 'C.A', 'AVG', 'F.A', 'LA', 'C.A', 'AVG', '', 'Reassessment', 'Observation'].map((label, idx) => (
+              {['F.A', 'LA', 'C.A', 'AVG', 'F.A', 'LA', 'C.A', 'AVG', 'F.A', 'LA', 'C.A', 'AVG', 'A.A', 'R.E', 'Observation'].map((label, idx) => (
                 <th key={idx} className="border border-black p-0.5">{label}</th>
               ))}
             </tr>
@@ -752,80 +805,80 @@ const TraineeAssessmentReportDisplay = ({ reportData, academicYear, onBack }) =>
                   <td colSpan="20" className="border border-black p-3 text-left"></td>
                 </tr>
                 <tr className="bg-blue-100 font-bold">
-                  <td colSpan="4" className="border border-black p-2 text-left">TOTAL</td>
-                  <td className="border border-black p-2 text-center"></td>
+                  <td colSpan="4" className="border border-black p-1 text-left">TOTAL</td>
+                  <td className="border border-black p-1 text-center">{overallStats.totalCredits}</td>
                   {['Semester 1', 'Semester 2', 'Semester 3'].map(term => {
                     const semesterTotals = calculateSemesterColumnTotals(term);
                     return (
                       <React.Fragment key={term}>
-                        <td className="border border-black p-2 text-center">
+                        <td className="border border-black p-1 text-center">
                           {semesterTotals.fa ? semesterTotals.fa : '-'}
                         </td>
-                        <td className="border border-black p-2 text-center">{semesterTotals.la ? semesterTotals.la : '-'}</td>
-                        <td className="border border-black p-2 text-center">{semesterTotals.ca ? semesterTotals.ca : '-'}</td>
-                        <td className="border border-black p-2 text-center">
+                        <td className="border border-black p-1 text-center">{semesterTotals.la ? semesterTotals.la : '-'}</td>
+                        <td className="border border-black p-1 text-center">{semesterTotals.ca ? semesterTotals.ca : '-'}</td>
+                        <td className="border border-black p-1 text-center">
                           {semesterTotals.avg ? semesterTotals.avg : '-'}
                         </td>
                       </React.Fragment>
                     );
                   })}
 
-                  <td className="border border-black p-2 text-center">
+                  <td className="border border-black p-1 text-center">
                     {allSemestersComplete ? overallStats.totalMarks : '-'}
                   </td>
-                  <td className="border border-black p-2 text-center"></td>
-                  <td className="border border-black p-2 text-center"></td>
+                  <td className="border border-black p-1 text-center"></td>
+                  <td className="border border-black p-1 text-center"></td>
                 </tr>
 
                 {/* Position Row */}
                 <tr className="bg-yellow-100 font-bold">
-                  <td colSpan="4" className="border border-black p-2 text-left">POSITION</td>
-                  <td className="border border-black p-2 text-center"></td>
+                  <td colSpan="4" className="border border-black p-1 text-left">POSITION</td>
+                  <td className="border border-black p-1 text-center"></td>
 
-                  <td colSpan="4" className="border border-black p-2 text-center">
+                  <td colSpan="4" className="border border-black p-1 text-center">
                     {semester1Result && semester1Result.ranking.position
                       ? `${semester1Result.ranking.position} out of ${semester1Result.ranking.totalStudents}`
                       : '-'}
                   </td>
 
-                  <td colSpan="4" className="border border-black p-2 text-center">
+                  <td colSpan="4" className="border border-black p-1 text-center">
                     {semester2Result && semester2Result.ranking.position
                       ? `${semester2Result.ranking.position} out of ${semester2Result.ranking.totalStudents}`
                       : '-'}
                   </td>
 
-                  <td colSpan="4" className="border border-black p-2 text-center">
+                  <td colSpan="4" className="border border-black p-1 text-center">
                     {semester3Result && semester3Result.ranking.position
                       ? `${semester3Result.ranking.position} out of ${semester3Result.ranking.totalStudents}`
                       : '-'}
                   </td>
 
-                  <td colSpan="2" className="border border-black p-2 text-center">
-                    {allSemestersComplete && overallRanking.position 
-                      ? `${overallRanking.position} out of ${overallRanking.totalStudents}` 
+                  <td colSpan="2" className="border border-black p-1 text-center">
+                    {allSemestersComplete && overallRanking.position
+                      ? `${overallRanking.position} out of ${overallRanking.totalStudents}`
                       : '-'}
                   </td>
-                  <td className="border border-black p-2 text-center"></td>
+                  <td className="border border-black p-1 text-center"></td>
                 </tr>
               </>
             )}
 
             {/* Class Trainer's Comments & Signature */}
             <tr className="bg-white font-bold">
-              <td colSpan="4" className="border border-black p-2 text-left">Class Trainer's Comments & Signature</td>
-              <td className="border border-black p-2 text-center"></td>
-              <td colSpan="4" className="border border-black p-2 text-center"></td>
-              <td colSpan="4" className="border border-black p-2 text-center"></td>
-              <td colSpan="4" className="border border-black p-2 text-center"></td>
-              <td colSpan="3" className="border border-black p-2 text-center"></td>
+              <td colSpan="4" className="border border-black p-1 text-left">Class Trainer's Comments & Signature</td>
+              <td className="border border-black p-1 text-center"></td>
+              <td colSpan="4" className="border border-black p-1 text-center"></td>
+              <td colSpan="4" className="border border-black p-1 text-center"></td>
+              <td colSpan="4" className="border border-black p-1 text-center"></td>
+              <td colSpan="3" className="border border-black p-1 text-center"></td>
             </tr>
             <tr className="bg-white font-bold">
-              <td colSpan="4" className="border border-black p-2 text-left">Parents signature</td>
-              <td className="border border-black p-2 text-center"></td>
-              <td colSpan="4" className="border border-black p-2 text-center"></td>
-              <td colSpan="4" className="border border-black p-2 text-center"></td>
-              <td colSpan="4" className="border border-black p-2 text-center"></td>
-              <td colSpan="3" className="border border-black p-2 text-center"></td>
+              <td colSpan="4" className="border border-black p-1 text-left">Parents signature</td>
+              <td className="border border-black p-1 text-center"></td>
+              <td colSpan="4" className="border border-black p-1 text-center"></td>
+              <td colSpan="4" className="border border-black p-1 text-center"></td>
+              <td colSpan="4" className="border border-black p-1 text-center"></td>
+              <td colSpan="3" className="border border-black p-1 text-center"></td>
             </tr>
           </tbody>
         </table>
@@ -835,13 +888,13 @@ const TraineeAssessmentReportDisplay = ({ reportData, academicYear, onBack }) =>
           <table className="w-full text-[10px]">
             <thead>
               <tr className="bg-gray-100">
-                <th className="border border-black p-2 font-bold">Deliberation</th>
-                <th className="border border-black p-2 font-bold">Promotion at 1st Sitting</th>
-                <th className="border border-black p-2 font-bold">2nd Sitting</th>
-                <th className="border border-black p-2 font-bold">Promoted after re-assessment</th>
-                <th className="border border-black p-2 font-bold">Advised to Repeat</th>
-                <th className="border border-black p-2 font-bold">Dismissed</th>
-                <th className="border border-black p-2 font-bold">School Manager<br />MURANGWA Annable<br />SIGNATURE<br />____/____/{new Date().getFullYear()}</th>
+                <th className="border border-black p-1 font-bold">Deliberation</th>
+                <th className="border border-black p-1 font-bold">Promotion at 1st Sitting</th>
+                <th className="border border-black p-1 font-bold">2nd Sitting</th>
+                <th className="border border-black p-1 font-bold">Promoted after re-assessment</th>
+                <th className="border border-black p-1 font-bold">Advised to Repeat</th>
+                <th className="border border-black p-1 font-bold">Dismissed</th>
+                <th className="border border-black p-1 font-bold">School Manager<br />MURANGWA Annable<br />SIGNATURE<br />____/____/{new Date().getFullYear()}</th>
               </tr>
             </thead>
             <tbody>
@@ -850,9 +903,20 @@ const TraineeAssessmentReportDisplay = ({ reportData, academicYear, onBack }) =>
                 <td className="border border-black p-3 text-center">
                   <input type="checkbox" className="w-4 h-4" />
                 </td>
-                <td className="border border-black p-3"></td>
-                <td className="border border-black p-3"></td>
-                <td className="border border-black p-3"></td>
+                <td className="border border-black p-3 text-center">
+                  <input type="checkbox" className="w-4 h-4" />
+                </td>
+                <td className="border border-black p-3 text-center">
+                  <input type="checkbox" className="w-4 h-4" />
+                </td>
+                <td className="border border-black p-3 text-center">
+                  <input type="checkbox" className="w-4 h-4" />
+                </td>
+                <td className="border border-black p-3 text-center">
+                  <input type="checkbox" className="w-4 h-4" />
+                </td>
+
+
                 <td className="border border-black p-3"></td>
                 <td className="border border-black p-3"></td>
               </tr>
