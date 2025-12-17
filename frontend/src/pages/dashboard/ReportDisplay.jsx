@@ -1,75 +1,402 @@
 import React, { useState, useEffect } from 'react';
+import { ChevronDown, ChevronRight, Printer, Download, User } from 'lucide-react';
+import classService from '../../services/classService';
 import studentService from '../../services/studentService';
 import api from '../../api/api';
 
-const TraineeAssessmentReport = () => {
-  const [students, setStudents] = useState([]);
-  const [selectedStudentId, setSelectedStudentId] = useState('');
-  const [academicYear, setAcademicYear] = useState('2024/2025');
+const ClassReportsViewer = () => {
+  const [classes, setClasses] = useState([]);
+  const [expandedClasses, setExpandedClasses] = useState({});
+  const [studentReports, setStudentReports] = useState({});
   const [loading, setLoading] = useState(false);
-  const [reportData, setReportData] = useState(null);
+  const [loadingReports, setLoadingReports] = useState({});
   const [error, setError] = useState(null);
-  const [loadingStudents, setLoadingStudents] = useState(false);
+  const [academicYear, setAcademicYear] = useState('2024/2025');
+  const [selectedReport, setSelectedReport] = useState(null);
 
-  // Load all students on component mount
+  // Load all classes on mount
   useEffect(() => {
-    loadStudents();
+    loadAllClasses();
   }, []);
 
-  const loadStudents = async () => {
-    setLoadingStudents(true);
-    setError(null);
-    try {
-      const response = await studentService.getAllStudents({ std_status: 'Active' });
-      setStudents(response.data || response);
-    } catch (err) {
-      setError('Failed to load students: ' + err.message);
-      console.error(err);
-    } finally {
-      setLoadingStudents(false);
-    }
-  };
-
-  const loadStudentReport = async () => {
-    if (!selectedStudentId) {
-      setError('Please select a student');
-      return;
-    }
-
+  const loadAllClasses = async () => {
     setLoading(true);
     setError(null);
-
     try {
-      // Use the comprehensive report endpoint with semester rankings
-      const response = await api.get(
-        `/report/student/${selectedStudentId}/assessment?ac_year=${academicYear}`
-      );
-
-      const result = response.data;
-      const data = result.data;
-
-      // Set report data with all processed information from backend
-      setReportData({
-        student: data.student,
-        subjects: data.subjects,
-        semesterResults: data.semesterResults || [],
-        overallStatistics: data.overallStatistics,
-        overallRanking: data.overallRanking,
-        categories: data.categories
-      });
-
+      const response = await classService.getAllClasses();
+      setClasses(response.data || response);
     } catch (err) {
-      setError('Failed to load report: ' + err.message);
+      setError('Failed to load classes: ' + err.message);
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
+  const toggleClass = async (classId) => {
+    const isExpanded = expandedClasses[classId];
+    
+    setExpandedClasses(prev => ({
+      ...prev,
+      [classId]: !isExpanded
+    }));
+
+    // If expanding and haven't loaded students yet, load them
+    if (!isExpanded && !studentReports[classId]) {
+      await loadClassStudents(classId);
+    }
+  };
+
+  const loadClassStudents = async (classId) => {
+    setLoadingReports(prev => ({ ...prev, [classId]: true }));
+    try {
+      const response = await classService.getClassStudents(classId);
+      const students = response.data || response;
+
+      // Initialize student reports for this class
+      setStudentReports(prev => ({
+        ...prev,
+        [classId]: {
+          students: students,
+          reports: {}
+        }
+      }));
+    } catch (err) {
+      console.error(`Failed to load students for class ${classId}:`, err);
+    } finally {
+      setLoadingReports(prev => ({ ...prev, [classId]: false }));
+    }
+  };
+
+  const loadStudentReport = async (classId, studentId) => {
+    setLoadingReports(prev => ({ 
+      ...prev, 
+      [`${classId}-${studentId}`]: true 
+    }));
+
+    try {
+      const response = await api.get(
+        `/report/student/${studentId}/assessment?ac_year=${academicYear}`
+      );
+
+      const result = response.data;
+      const data = result.data;
+
+      // Store the report data
+      setStudentReports(prev => ({
+        ...prev,
+        [classId]: {
+          ...prev[classId],
+          reports: {
+            ...prev[classId].reports,
+            [studentId]: {
+              student: data.student,
+              subjects: data.subjects,
+              semesterResults: data.semesterResults || [],
+              overallStatistics: data.overallStatistics,
+              overallRanking: data.overallRanking,
+              categories: data.categories
+            }
+          }
+        }
+      }));
+    } catch (err) {
+      console.error(`Failed to load report for student ${studentId}:`, err);
+    } finally {
+      setLoadingReports(prev => ({ 
+        ...prev, 
+        [`${classId}-${studentId}`]: false 
+      }));
+    }
+  };
+
+  const viewFullReport = (classId, studentId) => {
+    const report = studentReports[classId]?.reports[studentId];
+    if (report) {
+      setSelectedReport(report);
+    }
+  };
+
+  const printReport = () => {
+    window.print();
+  };
+
+  const exportReports = (classId) => {
+    const classData = studentReports[classId];
+    if (!classData) return;
+
+    const exportData = {
+      className: classes.find(c => c.class_id === classId)?.class_name,
+      academicYear: academicYear,
+      students: classData.students.map(student => {
+        const report = classData.reports[student.std_id];
+        return {
+          name: `${student.std_fname} ${student.std_lname}`,
+          admissionNumber: student.admission_number,
+          overallAverage: report?.overallStatistics?.overallAverage || 'N/A',
+          position: report?.overallRanking?.position || 'N/A'
+        };
+      })
+    };
+
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { 
+      type: 'application/json' 
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `class-${classId}-reports.json`;
+    a.click();
+  };
+
+  if (loading) {
+    return (
+      <div className="p-8 text-center">
+        <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <p className="mt-4 text-gray-600">Loading classes...</p>
+      </div>
+    );
+  }
+
+  if (selectedReport) {
+    return <TraineeAssessmentReportDisplay 
+      reportData={selectedReport} 
+      academicYear={academicYear}
+      onBack={() => setSelectedReport(null)}
+    />;
+  }
+
+  return (
+    <div className="p-8 bg-gray-50 min-h-screen">
+      <div className="max-w-7xl mx-auto">
+        <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+          <div className="flex justify-between items-center mb-4">
+            <h1 className="text-3xl font-bold text-gray-800">Class Reports</h1>
+            <div className="flex items-center gap-4">
+              <label className="text-sm font-medium">Academic Year:</label>
+              <input
+                type="text"
+                value={academicYear}
+                onChange={(e) => setAcademicYear(e.target.value)}
+                className="border border-gray-300 rounded px-3 py-1"
+                placeholder="2024/2025"
+              />
+            </div>
+          </div>
+
+          {error && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+              {error}
+            </div>
+          )}
+
+          <p className="text-gray-600">
+            View and print assessment reports for all students by class
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          {classes.map((classItem) => (
+            <div key={classItem.class_id} className="bg-white rounded-lg shadow">
+              <div className="border-b border-gray-200">
+                <button
+                  onClick={() => toggleClass(classItem.class_id)}
+                  className="w-full px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    {expandedClasses[classItem.class_id] ? (
+                      <ChevronDown className="w-5 h-5 text-gray-500" />
+                    ) : (
+                      <ChevronRight className="w-5 h-5 text-gray-500" />
+                    )}
+                    <div className="text-left">
+                      <h2 className="text-xl font-bold text-gray-800">
+                        {classItem.class_name}
+                      </h2>
+                      <p className="text-sm text-gray-600">
+                        Trade: {classItem.Trade?.trade_name || 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+                  {studentReports[classItem.class_id] && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        exportReports(classItem.class_id);
+                      }}
+                      className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 flex items-center gap-2"
+                    >
+                      <Download className="w-4 h-4" />
+                      Export
+                    </button>
+                  )}
+                </button>
+              </div>
+
+              {expandedClasses[classItem.class_id] && (
+                <div className="p-6">
+                  {loadingReports[classItem.class_id] ? (
+                    <div className="text-center py-8">
+                      <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                      <p className="mt-2 text-gray-600">Loading students...</p>
+                    </div>
+                  ) : studentReports[classItem.class_id]?.students?.length > 0 ? (
+                    <div className="grid gap-4">
+                      {studentReports[classItem.class_id].students.map((student) => {
+                        const report = studentReports[classItem.class_id].reports[student.std_id];
+                        const isLoadingReport = loadingReports[`${classItem.class_id}-${student.std_id}`];
+
+                        return (
+                          <div
+                            key={student.std_id}
+                            className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+                          >
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                                  <User className="w-6 h-6 text-blue-600" />
+                                </div>
+                                <div>
+                                  <h3 className="font-semibold text-gray-800">
+                                    {student.std_fname} {student.std_mname} {student.std_lname}
+                                  </h3>
+                                  <p className="text-sm text-gray-600">
+                                    Reg No: {student.admission_number}
+                                  </p>
+                                  {report && (
+                                    <div className="mt-1 flex gap-4 text-sm">
+                                      <span className="text-green-600 font-medium">
+                                        Avg: {report.overallStatistics?.overallAverage || 'N/A'}%
+                                      </span>
+                                      <span className="text-blue-600 font-medium">
+                                        Position: {report.overallRanking?.position || 'N/A'}/{report.overallRanking?.totalStudents || 'N/A'}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="flex gap-2">
+                                {!report ? (
+                                  <button
+                                    onClick={() => loadStudentReport(classItem.class_id, student.std_id)}
+                                    disabled={isLoadingReport}
+                                    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400"
+                                  >
+                                    {isLoadingReport ? 'Loading...' : 'Load Report'}
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={() => viewFullReport(classItem.class_id, student.std_id)}
+                                    className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 flex items-center gap-2"
+                                  >
+                                    <Printer className="w-4 h-4" />
+                                    View & Print
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-center py-8 text-gray-500">
+                      No students found in this class
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+
+          {classes.length === 0 && (
+            <div className="bg-white rounded-lg shadow p-8 text-center">
+              <p className="text-gray-500">No classes found</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// YOUR ORIGINAL REPORT DISPLAY COMPONENT WITH ALL YOUR LOGIC
+const TraineeAssessmentReportDisplay = ({ reportData, academicYear, onBack }) => {
   const calculateAnnualAverage = (terms) => {
-    const values = Object.values(terms).map(t => parseFloat(t.avg));
-    if (values.length === 0) return '0.00';
+    const values = Object.values(terms).map(t => parseFloat(t.avg)).filter(v => !isNaN(v) && v > 0);
+    if (values.length === 0) return null;
     return (values.reduce((a, b) => a + b, 0) / values.length).toFixed(2);
+  };
+
+  const hasAllSemesters = () => {
+    const subjects = getAllSubjects();
+    if (subjects.length === 0) return false;
+    
+    return subjects.every(subject => {
+      const s1 = subject.terms?.['Semester 1']?.avg;
+      const s2 = subject.terms?.['Semester 2']?.avg;
+      const s3 = subject.terms?.['Semester 3']?.avg;
+      return s1 && s2 && s3;
+    });
+  };
+
+  const isCompetent = (value, type) => {
+    const mark = parseFloat(value);
+    if (isNaN(mark) || mark <= 0) return true;
+    
+    if (type?.toLowerCase().includes('specific') || type?.toLowerCase().includes('core')) {
+      return mark >= 70;
+    } else if (type?.toLowerCase().includes('general')) {
+      return mark >= 60;
+    } else {
+      return mark >= 50;
+    }
+  };
+
+  const getMarkStyle = (value, type) => {
+    if (!value || value === '-') return {};
+    
+    if (!isCompetent(value, type)) {
+      return {
+        color: 'red',
+        textDecoration: 'underline',
+        fontWeight: 'bold'
+      };
+    }
+    return {};
+  };
+
+  const getObservation = (item, annualAvg, type) => {
+    const allSemesters = hasAllSemesters();
+    
+    if (allSemesters && annualAvg) {
+      const avg = parseFloat(annualAvg);
+      if (type?.includes('CORE') || type?.toLowerCase().includes('core') || type?.toLowerCase().includes('specific')) {
+        return avg > 70 ? 'C' : 'NYC';
+      } else if (type?.toLowerCase().includes('general')) {
+        return avg > 60 ? 'C' : 'NYC';
+      } else {
+        return avg > 50 ? 'C' : 'NYC';
+      }
+    } else {
+      const terms = item.terms || {};
+      const s3 = parseFloat(terms['Semester 3']?.avg);
+      const s2 = parseFloat(terms['Semester 2']?.avg);
+      const s1 = parseFloat(terms['Semester 1']?.avg);
+      
+      const recentAvg = !isNaN(s3) && s3 > 0 ? s3 : (!isNaN(s2) && s2 > 0 ? s2 : s1);
+      
+      if (!recentAvg || isNaN(recentAvg)) return '-';
+      
+      if (type?.includes('CORE') || type?.toLowerCase().includes('core') || type?.toLowerCase().includes('specific')) {
+        return recentAvg > 70 ? 'C' : 'NYC';
+      } else if (type?.toLowerCase().includes('general')) {
+        return recentAvg > 60 ? 'C' : 'NYC';
+      } else {
+        return recentAvg > 50 ? 'C' : 'NYC';
+      }
+    }
   };
 
   const getAllSubjects = () => {
@@ -77,34 +404,55 @@ const TraineeAssessmentReport = () => {
     return [...coreSpecific, ...coreGeneral, ...complementary];
   };
 
+ const calculateSemesterColumnTotals = (semesterName) => {
+  const subjects = getAllSubjects();
 
-  const calculateSemesterColumnTotals = (semesterName) => {
-    const subjects = getAllSubjects();
-
-    const totals = {
-      fa: 0,
-      la: 0,
-      ca: 0,
-      avg: 0
-    };
-
-    subjects.forEach(subject => {
-      const term = subject.terms?.[semesterName];
-      if (!term) return;
-
-      totals.fa += parseFloat(term.fa || 0);
-      totals.la += parseFloat(term.la || 0);
-      totals.ca += parseFloat(term.ca || 0);
-      totals.avg += parseFloat(term.avg || 0);
-    });
-
-    return {
-      fa: totals.fa.toFixed(2),
-      la: totals.la.toFixed(2),
-      ca: totals.ca.toFixed(2),
-      avg: totals.avg.toFixed(2)
-    };
+  const totals = {
+    fa: 0,
+    la: 0,
+    ca: 0,
+    avg: 0
   };
+
+  const hasValue = {
+    fa: false,
+    la: false,
+    ca: false,
+    avg: false
+  };
+
+  subjects.forEach(subject => {
+    const term = subject.terms?.[semesterName];
+    if (!term) return;
+
+    if (term.fa !== null) {
+      totals.fa += Number(term.fa);
+      hasValue.fa = true;
+    }
+
+    if (term.la !== null) {
+      totals.la += Number(term.la);
+      hasValue.la = true;
+    }
+
+    if (term.ca !== null) {
+      totals.ca += Number(term.ca);
+      hasValue.ca = true;
+    }
+
+    if (term.avg !== null) {
+      totals.avg += Number(term.avg);
+      hasValue.avg = true;
+    }
+  });
+
+  return {
+    fa: hasValue.fa ? totals.fa.toFixed(2) : null,
+    la: hasValue.la ? totals.la.toFixed(2) : null,
+    ca: hasValue.ca ? totals.ca.toFixed(2) : null,
+    avg: hasValue.avg ? totals.avg.toFixed(2) : null
+  };
+};
 
 
   const getSemesterResult = (semesterName) => {
@@ -116,78 +464,21 @@ const TraineeAssessmentReport = () => {
     window.print();
   };
 
-  // Safe accessors for data
   const getSubjects = () => reportData?.subjects || [];
   const getCategories = () => reportData?.categories || { coreSpecific: [], coreGeneral: [], complementary: [] };
   const getOverallStats = () => reportData?.overallStatistics || { totalMarks: 0, overallAverage: 0, totalCredits: 0 };
   const getOverallRanking = () => reportData?.overallRanking || { position: null, totalStudents: 0, percentile: 0 };
-
-  if (!reportData) {
-    return (
-      <div className="p-8 bg-gray-50 min-h-screen">
-        <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-8">
-          <h2 className="text-2xl font-bold mb-6">Load Student Assessment Report</h2>
-
-          {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-              {error}
-            </div>
-          )}
-
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">Select Student</label>
-              {loadingStudents ? (
-                <p className="text-gray-500">Loading students...</p>
-              ) : (
-                <select
-                  className="border border-gray-300 rounded px-4 py-2 w-full"
-                  value={selectedStudentId}
-                  onChange={(e) => setSelectedStudentId(e.target.value)}
-                >
-                  <option value="">-- Select a student --</option>
-                  {students.map((student) => (
-                    <option key={student.std_id} value={student.std_id}>
-                      {student.admission_number} - {student.std_fname} {student.std_mname} {student.std_lname}
-                    </option>
-                  ))}
-                </select>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-2">Academic Year</label>
-              <input
-                type="text"
-                className="border border-gray-300 rounded px-4 py-2 w-full"
-                value={academicYear}
-                onChange={(e) => setAcademicYear(e.target.value)}
-                placeholder="e.g., 2024/2025"
-              />
-            </div>
-
-            <button
-              onClick={loadStudentReport}
-              disabled={loading || !selectedStudentId}
-              className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400 w-full"
-            >
-              {loading ? 'Loading Report...' : 'Generate Report'}
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   const { coreSpecific, coreGeneral, complementary } = getCategories();
   const student = reportData.student;
   const overallStats = getOverallStats();
   const overallRanking = getOverallRanking();
 
-  // Get semester results
   const semester1Result = getSemesterResult('Semester 1');
   const semester2Result = getSemesterResult('Semester 2');
   const semester3Result = getSemesterResult('Semester 3');
+
+  const allSemestersComplete = hasAllSemesters();
 
   return (
     <div className="bg-white p-4">
@@ -219,10 +510,10 @@ const TraineeAssessmentReport = () => {
           Print Report
         </button>
         <button
-          onClick={() => setReportData(null)}
+          onClick={onBack}
           className="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700"
         >
-          Load Another Report
+          Back to Classes
         </button>
       </div>
 
@@ -291,55 +582,45 @@ const TraineeAssessmentReport = () => {
 
         {/* Main Assessment Table */}
         <table className="w-full border-collapse text-[9px]">
-
-
-
           <thead>
-    {/* Percentage Row */}
-                <tr className="bg-gray-100 font-bold">
-                  <td colSpan="4" className="border border-black p-2 text-left"></td>
-                  <td className="border  border-black p-2 text-center">MAX</td>
+            <tr className="bg-gray-100 font-bold">
+              <td colSpan="4" className="border border-black p-2 text-left"></td>
+              <td className="border border-black p-2 text-center">MAX</td>
 
-                   <th colSpan="4" className="border border-black p-0.5 bg-gray-100">1st Term</th>
+              <th colSpan="4" className="border border-black p-0.5 bg-gray-100">1st Term</th>
               <th colSpan="4" className="border border-black p-0.5 bg-gray-100">2nd Term</th>
               <th colSpan="4" className="border border-black p-0.5 bg-gray-100">3rd Term</th>
-              <th  className="border border-black p-1 bg-gray-100">A.A<br />(%)</th>
-                  {/* Overall Average Percentage */}
-                 
-                </tr>
+              <th colSpan={3} className="border border-black p-1 bg-gray-100">A.A<br />(%)</th>
+            </tr>
 
-               
-    {/* Percentage Row */}
-                <tr className="bg-gray-100 font-bold">
-                  <td colSpan="4" className="border border-black p-2 text-left">Behaviour</td>
-                  <td className="border  border-black p-2 text-center">100</td>
+            <tr className="bg-gray-100 font-bold">
+              <td colSpan="4" className="border border-black p-2 text-left">Behaviour</td>
+              <td className="border border-black p-2 text-center">100</td>
 
-                  <td colSpan="4" className="border border-black p-2 text-center">
-                    {semester1Result ? `${semester1Result.percentage}%` : '-'}
-                  </td>
-                  {/* Semester 2 Percentage */}
+              <td colSpan="4" className="border border-black p-2 text-center">
+                {semester1Result ? `${semester1Result.percentage}%` : '-'}
+              </td>
 
-                  <td colSpan="4" className="border border-black p-2 text-center">
-                    {semester2Result ? `${semester2Result.percentage}%` : '-'}
-                  </td>
-                  {/* Semester 3 Percentage */}
+              <td colSpan="4" className="border border-black p-2 text-center">
+                {semester2Result ? `${semester2Result.percentage}%` : '-'}
+              </td>
 
-                  <td colSpan="4" className="border border-black p-2 text-center">
-                    {semester3Result ? `${semester3Result.percentage}%` : '-'}
-                  </td>
-                  {/* Overall Average Percentage */}
-                  <td className="border border-black p-2 text-center">{overallStats.overallAverage}%</td>
-                </tr>
+              <td colSpan="4" className="border border-black p-2 text-center">
+                {semester3Result ? `${semester3Result.percentage}%` : '-'}
+              </td>
 
-               
+              <td colSpan="3" className="border border-black p-2 text-center">
+                {allSemestersComplete ? `${overallStats.overallAverage}%` : '-'}
+              </td>
+            </tr>
+
             <tr>
               <th colSpan="3" rowSpan="2" className="border border-black p-1 bg-gray-100">Module Code</th>
               <th rowSpan="2" className="border border-black p-1 bg-gray-100">Competence Title</th>
               <th rowSpan="2" className="border border-black p-1 bg-gray-100">Credits</th>
-           
             </tr>
             <tr className="bg-gray-100">
-              {['F.A', 'LA', 'C.A', 'AVG', 'F.A', 'LA', 'C.A', 'AVG', 'F.A', 'LA', 'C.A', 'AVG'].map((label, idx) => (
+              {['F.A', 'LA', 'C.A', 'AVG', 'F.A', 'LA', 'C.A', 'AVG', 'F.A', 'LA', 'C.A', 'AVG', '', 'Reassessment', 'Observation'].map((label, idx) => (
                 <th key={idx} className="border border-black p-0.5">{label}</th>
               ))}
             </tr>
@@ -349,27 +630,36 @@ const TraineeAssessmentReport = () => {
             {coreSpecific.length > 0 && (
               <>
                 <tr className="bg-blue-50">
-                  <td colSpan="18" className="border border-black p-1 font-bold">Core competencies - Specific</td>
+                  <td colSpan="20" className="border border-black p-1 font-bold">Core competencies - Specific</td>
                 </tr>
-                {coreSpecific.map((item, idx) => (
-                  <tr key={`cs-${idx}`}>
-                    <td colSpan="3" className="border border-black p-1">{item.code}</td>
-                    <td className="border border-black p-1">{item.title}</td>
-                    <td className="border border-black p-1 text-center">{item.credits}</td>
-                    {['Semester 1', 'Semester 2', 'Semester 3'].map(term => {
-                      const termData = item.terms[term] || {};
-                      return (
-                        <React.Fragment key={term}>
-                          <td className="border border-black p-1 text-center">{termData.fa || '-'}</td>
-                          <td className="border border-black p-1 text-center">{termData.la || '-'}</td>
-                          <td className="border border-black p-1 text-center">{termData.ca || '-'}</td>
-                          <td className="border border-black p-1 text-center">{termData.avg || '-'}</td>
-                        </React.Fragment>
-                      );
-                    })}
-                    <td className="border border-black p-1 text-center font-bold">{calculateAnnualAverage(item.terms)}</td>
-                  </tr>
-                ))}
+                {coreSpecific.map((item, idx) => {
+                  const annualAvg = calculateAnnualAverage(item.terms);
+                  return (
+                    <tr key={`cs-${idx}`}>
+                      <td colSpan="3" className="border border-black p-1">{item.code}</td>
+                      <td className="border border-black p-1">{item.title}</td>
+                      <td className="border border-black p-1 text-center">{item.credits}</td>
+                      {['Semester 1', 'Semester 2', 'Semester 3'].map(term => {
+                        const termData = item.terms[term] || {};
+                        return (
+                          <React.Fragment key={term}>
+                            <td className="border border-black p-1 text-center" style={getMarkStyle(termData.fa, 'specific')}>{termData.fa || '-'}</td>
+                            <td className="border border-black p-1 text-center" style={getMarkStyle(termData.la, 'specific')}>{termData.la || '-'}</td>
+                            <td className="border border-black p-1 text-center" style={getMarkStyle(termData.ca, 'specific')}>{termData.ca || '-'}</td>
+                            <td className="border border-black p-1 text-center" style={getMarkStyle(termData.avg, 'specific')}>{termData.avg || '-'}</td>
+                          </React.Fragment>
+                        );
+                      })}
+                      <td className="border border-black p-1 text-center font-bold" style={getMarkStyle(annualAvg, 'specific')}>
+                        {allSemestersComplete && annualAvg ? annualAvg : '-'}
+                      </td>
+                      <td className="border border-black p-1 text-center font-bold"></td>
+                      <td className="border border-black p-1 text-center font-bold">
+                        {getObservation(item, annualAvg, 'specific')}
+                      </td>
+                    </tr>
+                  );
+                })}
               </>
             )}
 
@@ -377,27 +667,36 @@ const TraineeAssessmentReport = () => {
             {coreGeneral.length > 0 && (
               <>
                 <tr className="bg-green-50">
-                  <td colSpan="18" className="border border-black p-1 font-bold">Core competencies - General</td>
+                  <td colSpan="20" className="border border-black p-1 font-bold">Core competencies - General</td>
                 </tr>
-                {coreGeneral.map((item, idx) => (
-                  <tr key={`cg-${idx}`}>
-                    <td colSpan="3" className="border border-black p-1">{item.code}</td>
-                    <td className="border border-black p-1">{item.title}</td>
-                    <td className="border border-black p-1 text-center">{item.credits}</td>
-                    {['Semester 1', 'Semester 2', 'Semester 3'].map(term => {
-                      const termData = item.terms[term] || {};
-                      return (
-                        <React.Fragment key={term}>
-                          <td className="border border-black p-1 text-center">{termData.fa || '-'}</td>
-                          <td className="border border-black p-1 text-center">{termData.la || '-'}</td>
-                          <td className="border border-black p-1 text-center">{termData.ca || '-'}</td>
-                          <td className="border border-black p-1 text-center">{termData.avg || '-'}</td>
-                        </React.Fragment>
-                      );
-                    })}
-                    <td className="border border-black p-1 text-center font-bold">{calculateAnnualAverage(item.terms)}</td>
-                  </tr>
-                ))}
+                {coreGeneral.map((item, idx) => {
+                  const annualAvg = calculateAnnualAverage(item.terms);
+                  return (
+                    <tr key={`cg-${idx}`}>
+                      <td colSpan="3" className="border border-black p-1">{item.code}</td>
+                      <td className="border border-black p-1">{item.title}</td>
+                      <td className="border border-black p-1 text-center">{item.credits}</td>
+                      {['Semester 1', 'Semester 2', 'Semester 3'].map(term => {
+                        const termData = item.terms[term] || {};
+                        return (
+                          <React.Fragment key={term}>
+                            <td className="border border-black p-1 text-center" style={getMarkStyle(termData.fa, 'general')}>{termData.fa || '-'}</td>
+                            <td className="border border-black p-1 text-center" style={getMarkStyle(termData.la, 'general')}>{termData.la || '-'}</td>
+                            <td className="border border-black p-1 text-center" style={getMarkStyle(termData.ca, 'general')}>{termData.ca || '-'}</td>
+                            <td className="border border-black p-1 text-center" style={getMarkStyle(termData.avg, 'general')}>{termData.avg || '-'}</td>
+                          </React.Fragment>
+                        );
+                      })}
+                      <td className="border border-black p-1 text-center font-bold" style={getMarkStyle(annualAvg, 'general')}>
+                        {allSemestersComplete && annualAvg ? annualAvg : '-'}
+                      </td>
+                      <td className="border border-black p-1 text-center font-bold"></td>
+                      <td className="border border-black p-1 text-center font-bold">
+                        {getObservation(item, annualAvg, 'general')}
+                      </td>
+                    </tr>
+                  );
+                })}
               </>
             )}
 
@@ -405,159 +704,131 @@ const TraineeAssessmentReport = () => {
             {complementary.length > 0 && (
               <>
                 <tr className="bg-yellow-50">
-                  <td colSpan="18" className="border border-black p-1 font-bold">Complementary competencies</td>
+                  <td colSpan="20" className="border border-black p-1 font-bold">Complementary competencies</td>
                 </tr>
-                {complementary.map((item, idx) => (
-                  <tr key={`cc-${idx}`}>
-                    <td colSpan="3" className="border border-black p-1">{item.code}</td>
-                    <td className="border border-black p-1">{item.title}</td>
-                    <td className="border border-black p-1 text-center">{item.credits}</td>
-                    {['Semester 1', 'Semester 2', 'Semester 3'].map(term => {
-                      const termData = item.terms[term] || {};
-                      return (
-                        <React.Fragment key={term}>
-                          <td className="border border-black p-1 text-center">{termData.fa || '-'}</td>
-                          <td className="border border-black p-1 text-center">{termData.la || '-'}</td>
-                          <td className="border border-black p-1 text-center">{termData.ca || '-'}</td>
-                          <td className="border border-black p-1 text-center">{termData.avg || '-'}</td>
-                        </React.Fragment>
-                      );
-                    })}
-                    <td className="border border-black p-1 text-center font-bold">{calculateAnnualAverage(item.terms)}</td>
-                  </tr>
-                ))}
+                {complementary.map((item, idx) => {
+                  const annualAvg = calculateAnnualAverage(item.terms);
+                  return (
+                    <tr key={`cc-${idx}`}>
+                      <td colSpan="3" className="border border-black p-1">{item.code}</td>
+                      <td className="border border-black p-1">{item.title}</td>
+                      <td className="border border-black p-1 text-center">{item.credits}</td>
+                      {['Semester 1', 'Semester 2', 'Semester 3'].map(term => {
+                        const termData = item.terms[term] || {};
+                        return (
+                          <React.Fragment key={term}>
+                            <td className="border border-black p-1 text-center" style={getMarkStyle(termData.fa, 'complementary')}>{termData.fa || '-'}</td>
+                            <td className="border border-black p-1 text-center" style={getMarkStyle(termData.la, 'complementary')}>{termData.la || '-'}</td>
+                            <td className="border border-black p-1 text-center" style={getMarkStyle(termData.ca, 'complementary')}>{termData.ca || '-'}</td>
+                            <td className="border border-black p-1 text-center" style={getMarkStyle(termData.avg, 'complementary')}>{termData.avg || '-'}</td>
+                          </React.Fragment>
+                        );
+                      })}
+                      <td className="border border-black p-1 text-center font-bold" style={getMarkStyle(annualAvg, 'complementary')}>
+                        {allSemestersComplete && annualAvg ? annualAvg : '-'}
+                      </td>
+                      <td className="border border-black p-1 text-center font-bold"></td>
+                      <td className="border border-black p-1 text-center font-bold">
+                        {getObservation(item, annualAvg, 'complementary')}
+                      </td>
+                    </tr>
+                  );
+                })}
               </>
             )}
 
             {getSubjects().length === 0 && (
               <tr>
-                <td colSpan="18" className="border border-black p-4 text-center text-gray-500">
+                <td colSpan="20" className="border border-black p-4 text-center text-gray-500">
                   No assessment data available for this student
                 </td>
               </tr>
             )}
 
-            {/* Term Totals Row - Individual Column Totals */}
+            {/* Term Totals Row */}
             {getSubjects().length > 0 && (
               <>
+                <tr className="bg-white font-bold">
+                  <td colSpan="20" className="border border-black p-3 text-left"></td>
+                </tr>
                 <tr className="bg-blue-100 font-bold">
                   <td colSpan="4" className="border border-black p-2 text-left">TOTAL</td>
                   <td className="border border-black p-2 text-center"></td>
-                  {/* Semester 1 Totals */}
-                  {
-                    ['Semester 1', 'Semester 2', 'Semester 3'].map(term => {
+                  {['Semester 1', 'Semester 2', 'Semester 3'].map(term => {
+                    const semesterTotals = calculateSemesterColumnTotals(term);
+                    return (
+                      <React.Fragment key={term}>
+                        <td className="border border-black p-2 text-center">
+                          {semesterTotals.fa ? semesterTotals.fa : '-'}
+                        </td>
+                        <td className="border border-black p-2 text-center">{semesterTotals.la ? semesterTotals.la : '-'}</td>
+                        <td className="border border-black p-2 text-center">{semesterTotals.ca ? semesterTotals.ca : '-'}</td>
+                        <td className="border border-black p-2 text-center">
+                          {semesterTotals.avg ? semesterTotals.avg : '-'}
+                        </td>
+                      </React.Fragment>
+                    );
+                  })}
 
-                      const semesterTotals = calculateSemesterColumnTotals(term);
-
-                      return (
-                        <>
-
-                          <td className="border border-black p-2 text-center">
-                            {semesterTotals.fa ? semesterTotals.fa : '-'}
-                          </td>
-                          <td className="border border-black p-2 text-center">{semesterTotals.la ? semesterTotals.la : '-'}</td>
-                          <td className="border border-black p-2 text-center">{semesterTotals.ca ? semesterTotals.ca : '-'}</td>
-                          <td className="border border-black p-2 text-center">
-                            {semesterTotals.avg ? semesterTotals.avg : '-'}
-                          </td>
-
-
-                        </>
-
-                      )
-                    })
-                  }
-
-                  {/* Annual Average Total */}
-                  <td className="border border-black p-2 text-center">{overallStats.totalMarks}</td>
+                  <td className="border border-black p-2 text-center">
+                    {allSemestersComplete ? overallStats.totalMarks : '-'}
+                  </td>
+                  <td className="border border-black p-2 text-center"></td>
+                  <td className="border border-black p-2 text-center"></td>
                 </tr>
 
-                {/* Percentage Row */}
-               
                 {/* Position Row */}
                 <tr className="bg-yellow-100 font-bold">
                   <td colSpan="4" className="border border-black p-2 text-left">POSITION</td>
                   <td className="border border-black p-2 text-center"></td>
-                  {/* Semester 1 Position */}
-          
-                  <td  colSpan="4"  className="border border-black p-2 text-center">
+
+                  <td colSpan="4" className="border border-black p-2 text-center">
                     {semester1Result && semester1Result.ranking.position
                       ? `${semester1Result.ranking.position} out of ${semester1Result.ranking.totalStudents}`
-                      : 'N/A'}
+                      : '-'}
                   </td>
-                  {/* Semester 2 Position */}
-                
-                  <td  colSpan="4"  className="border border-black p-2 text-center">
+
+                  <td colSpan="4" className="border border-black p-2 text-center">
                     {semester2Result && semester2Result.ranking.position
                       ? `${semester2Result.ranking.position} out of ${semester2Result.ranking.totalStudents}`
-                      : 'N/A'}
+                      : '-'}
                   </td>
-                  {/* Semester 3 Position */}
-               
-                  <td  colSpan="4"  className="border border-black p-2 text-center">
+
+                  <td colSpan="4" className="border border-black p-2 text-center">
                     {semester3Result && semester3Result.ranking.position
                       ? `${semester3Result.ranking.position} out of ${semester3Result.ranking.totalStudents}`
-                      : 'N/A'}
+                      : '-'}
                   </td>
-                  {/* Overall Position */}
-                  <td className="border border-black p-2 text-center">
-                    {overallRanking.position ? `${overallRanking.position} out of ${overallRanking.totalStudents}` : 'N/A'}
+
+                  <td colSpan="2" className="border border-black p-2 text-center">
+                    {allSemestersComplete && overallRanking.position 
+                      ? `${overallRanking.position} out of ${overallRanking.totalStudents}` 
+                      : '-'}
                   </td>
+                  <td className="border border-black p-2 text-center"></td>
                 </tr>
               </>
             )}
 
-            {/*  Class Trainer's Comments & Signature */}
-                <tr className=" bg-white font-bold">
-                  <td colSpan="4" className="border border-black p-2 text-left">Class Trainer's Comments & Signature</td>
-                  <td className="border border-black p-2 text-center"></td>
-                  {/* Semester 1 Position */}
-          
-                  <td  colSpan="4"  className="border border-black p-2 text-center">
-                    
-                  </td>
-                  {/* Semester 2 Position */}
-                
-                  <td  colSpan="4"  className="border border-black p-2 text-center">
-                  
-                  </td>
-                  {/* Semester 3 Position */}
-               
-                  <td  colSpan="4"  className="border border-black p-2 text-center">
-
-                  </td>
-                  {/* Overall Position */}
-                  <td className="border border-black p-2 text-center">
-                   
-                  </td>
-                </tr>
-                <tr className=" bg-white font-bold">
-                  <td colSpan="4" className="border border-black p-2 text-left">Parents signature</td>
-                  <td className="border border-black p-2 text-center"></td>
-                  {/* Semester 1 Position */}
-          
-                  <td  colSpan="4"  className="border border-black p-2 text-center">
-                    
-                  </td>
-                  {/* Semester 2 Position */}
-                
-                  <td  colSpan="4"  className="border border-black p-2 text-center">
-                  
-                  </td>
-                  {/* Semester 3 Position */}
-               
-                  <td  colSpan="4"  className="border border-black p-2 text-center">
-
-                  </td>
-                  {/* Overall Position */}
-                  <td className="border border-black p-2 text-center">
-                   
-                  </td>
-                </tr>
+            {/* Class Trainer's Comments & Signature */}
+            <tr className="bg-white font-bold">
+              <td colSpan="4" className="border border-black p-2 text-left">Class Trainer's Comments & Signature</td>
+              <td className="border border-black p-2 text-center"></td>
+              <td colSpan="4" className="border border-black p-2 text-center"></td>
+              <td colSpan="4" className="border border-black p-2 text-center"></td>
+              <td colSpan="4" className="border border-black p-2 text-center"></td>
+              <td colSpan="3" className="border border-black p-2 text-center"></td>
+            </tr>
+            <tr className="bg-white font-bold">
+              <td colSpan="4" className="border border-black p-2 text-left">Parents signature</td>
+              <td className="border border-black p-2 text-center"></td>
+              <td colSpan="4" className="border border-black p-2 text-center"></td>
+              <td colSpan="4" className="border border-black p-2 text-center"></td>
+              <td colSpan="4" className="border border-black p-2 text-center"></td>
+              <td colSpan="3" className="border border-black p-2 text-center"></td>
+            </tr>
           </tbody>
         </table>
-
-      
 
         {/* Deliberation Table */}
         <div className="border-t border-black">
@@ -570,7 +841,7 @@ const TraineeAssessmentReport = () => {
                 <th className="border border-black p-2 font-bold">Promoted after re-assessment</th>
                 <th className="border border-black p-2 font-bold">Advised to Repeat</th>
                 <th className="border border-black p-2 font-bold">Dismissed</th>
-                <th className="border border-black p-2 font-bold">School Manager<br />MURANGWA Annable<br />SIGNATURE<br />____/____/2024</th>
+                <th className="border border-black p-2 font-bold">School Manager<br />MURANGWA Annable<br />SIGNATURE<br />____/____/{new Date().getFullYear()}</th>
               </tr>
             </thead>
             <tbody>
@@ -579,18 +850,10 @@ const TraineeAssessmentReport = () => {
                 <td className="border border-black p-3 text-center">
                   <input type="checkbox" className="w-4 h-4" />
                 </td>
-                <td className="border border-black p-3 text-center">
-                  <input type="checkbox" className="w-4 h-4" />
-                </td>
-                <td className="border border-black p-3 text-center">
-                  <input type="checkbox" className="w-4 h-4" />
-                </td>
-                <td className="border border-black p-3 text-center">
-                  <input type="checkbox" className="w-4 h-4" />
-                </td>
-                <td className="border border-black p-3 text-center">
-                  <input type="checkbox" className="w-4 h-4" />
-                </td>
+                <td className="border border-black p-3"></td>
+                <td className="border border-black p-3"></td>
+                <td className="border border-black p-3"></td>
+                <td className="border border-black p-3"></td>
                 <td className="border border-black p-3"></td>
               </tr>
             </tbody>
@@ -606,4 +869,4 @@ const TraineeAssessmentReport = () => {
   );
 };
 
-export default TraineeAssessmentReport;
+export default ClassReportsViewer
