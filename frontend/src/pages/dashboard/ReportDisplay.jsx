@@ -377,8 +377,12 @@ const ClassReportsViewer = () => {
   );
 };
 
-// YOUR ORIGINAL REPORT DISPLAY COMPONENT WITH ALL YOUR LOGIC
+import React, { useState } from 'react';
+import logo from './assets/logo.png'; // Adjust path as needed
+
 export const TraineeAssessmentReportDisplay = ({ reportData, academicYear, onBack }) => {
+  const [viewMode, setViewMode] = useState('all'); // 'all', 'semester1', 'semester2', 'semester3'
+
   const calculateAnnualAverage = (terms) => {
     const values = Object.values(terms).map(t => parseFloat(t.avg)).filter(v => !isNaN(v) && v > 0);
     if (values.length === 0) return null;
@@ -510,7 +514,6 @@ export const TraineeAssessmentReportDisplay = ({ reportData, academicYear, onBac
     };
   };
 
-
   const getSemesterResult = (semesterName) => {
     if (!reportData?.semesterResults) return null;
     return reportData.semesterResults.find(sr => sr.semester === semesterName);
@@ -536,6 +539,23 @@ export const TraineeAssessmentReportDisplay = ({ reportData, academicYear, onBac
 
   const allSemestersComplete = hasAllSemesters();
 
+  // Determine which semesters to display based on view mode
+  const getSemestersToDisplay = () => {
+    if (viewMode === 'all') {
+      return ['Semester 1', 'Semester 2', 'Semester 3'];
+    } else if (viewMode === 'semester1') {
+      return ['Semester 1'];
+    } else if (viewMode === 'semester2') {
+      return ['Semester 2'];
+    } else if (viewMode === 'semester3') {
+      return ['Semester 3'];
+    }
+    return ['Semester 1', 'Semester 2', 'Semester 3'];
+  };
+
+  const semestersToDisplay = getSemestersToDisplay();
+  const showAnnualAverage = viewMode === 'all';
+
   return (
     <div className="bg-white p-4">
       <style>{`
@@ -558,19 +578,66 @@ export const TraineeAssessmentReportDisplay = ({ reportData, academicYear, onBac
         }
       `}</style>
 
-      <div className="no-print mb-4 text-center space-x-4">
-        <button
-          onClick={handlePrint}
-          className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700"
-        >
-          Print Report
-        </button>
-        <button
-          onClick={onBack}
-          className="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700"
-        >
-          Back to Classes
-        </button>
+      <div className="no-print mb-4">
+        {/* View Mode Selector */}
+        <div className="flex justify-center gap-2 mb-4">
+          <button
+            onClick={() => setViewMode('all')}
+            className={`px-4 py-2 rounded ${
+              viewMode === 'all'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            All Terms
+          </button>
+          <button
+            onClick={() => setViewMode('semester1')}
+            className={`px-4 py-2 rounded ${
+              viewMode === 'semester1'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            Term 1 Only
+          </button>
+          <button
+            onClick={() => setViewMode('semester2')}
+            className={`px-4 py-2 rounded ${
+              viewMode === 'semester2'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            Term 2 Only
+          </button>
+          <button
+            onClick={() => setViewMode('semester3')}
+            className={`px-4 py-2 rounded ${
+              viewMode === 'semester3'
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            Term 3 Only
+          </button>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="text-center space-x-4">
+          <button
+            onClick={handlePrint}
+            className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700"
+          >
+            Print Report
+          </button>
+          <button
+            onClick={onBack}
+            className="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700"
+          >
+            Back to Classes
+          </button>
+        </div>
       </div>
 
       <div className="print-area border border-black">
@@ -584,7 +651,7 @@ export const TraineeAssessmentReportDisplay = ({ reportData, academicYear, onBac
           </div>
 
           <div className="border-r border-black p-3 flex flex-col items-center justify-center">
-            <img src={logo} className=' h-40' alt="" />
+            <img src={logo} className='h-40' alt="" />
           </div>
 
           <div className="p-3 text-xs">
@@ -597,7 +664,14 @@ export const TraineeAssessmentReportDisplay = ({ reportData, academicYear, onBac
 
         {/* Title */}
         <div className="bg-gray-200 border-b border-black p-1.5 text-center">
-          <h2 className="font-bold text-sm">TRAINEE'S ASSESSMENT REPORT</h2>
+          <h2 className="font-bold text-sm">
+            TRAINEE'S ASSESSMENT REPORT
+            {viewMode !== 'all' && (
+              <span className="ml-2">
+                ({viewMode === 'semester1' ? '1st Term' : viewMode === 'semester2' ? '2nd Term' : '3rd Term'})
+              </span>
+            )}
+          </h2>
         </div>
 
         {/* Qualification Info */}
@@ -628,9 +702,13 @@ export const TraineeAssessmentReportDisplay = ({ reportData, academicYear, onBac
           <span className="font-bold">F.A:</span> Formative Assessment |
           <span className="font-bold"> LA:</span> Integrated Assessment |
           <span className="font-bold"> C.A:</span> Comprehensive Assessment |
-          <span className="font-bold"> AVG:</span> Average |
-          <span className="font-bold"> A.A:</span> Annual Average
-          <span className="font-bold"> R.E:</span> Re-Assessment
+          <span className="font-bold"> AVG:</span> Average
+          {showAnnualAverage && (
+            <>
+              <span className="font-bold"> | A.A:</span> Annual Average
+            </>
+          )}
+          <span className="font-bold"> | R.E:</span> Re-Assessment
         </div>
 
         {/* Main Assessment Table */}
@@ -640,31 +718,35 @@ export const TraineeAssessmentReportDisplay = ({ reportData, academicYear, onBac
               <td colSpan="4" className="border border-black p-1 text-left"></td>
               <td className="border border-black p-1 text-center">MAX</td>
 
-              <th colSpan="4" className="border border-black p-0.5 bg-gray-100">1st Term</th>
-              <th colSpan="4" className="border border-black p-0.5 bg-gray-100">2nd Term</th>
-              <th colSpan="4" className="border border-black p-0.5 bg-gray-100">3rd Term</th>
-              <th colSpan={3} className="border border-black p-1 bg-gray-100">A.A<br />(%)</th>
+              {semestersToDisplay.map((semester, idx) => (
+                <th key={idx} colSpan="4" className="border border-black p-0.5 bg-gray-100">
+                  {semester === 'Semester 1' ? '1st Term' : semester === 'Semester 2' ? '2nd Term' : '3rd Term'}
+                </th>
+              ))}
+              
+              {showAnnualAverage && (
+                <th colSpan={3} className="border border-black p-1 bg-gray-100">A.A<br />(%)</th>
+              )}
             </tr>
 
             <tr className="bg-gray-100 font-bold">
               <td colSpan="4" className="border border-black p-1 text-left">Behaviour</td>
               <td className="border border-black p-1 text-center">100</td>
 
-              <td colSpan="4" className="border border-black p-1 text-center">
-                {semester1Result ? `${semester1Result.percentage}%` : '-'}
-              </td>
+              {semestersToDisplay.map((semester, idx) => {
+                const result = getSemesterResult(semester);
+                return (
+                  <td key={idx} colSpan="4" className="border border-black p-1 text-center">
+                    {result ? `${result.percentage}%` : '-'}
+                  </td>
+                );
+              })}
 
-              <td colSpan="4" className="border border-black p-1 text-center">
-                {semester2Result ? `${semester2Result.percentage}%` : '-'}
-              </td>
-
-              <td colSpan="4" className="border border-black p-1 text-center">
-                {semester3Result ? `${semester3Result.percentage}%` : '-'}
-              </td>
-
-              <td colSpan="3" className="border border-black p-1 text-center">
-                {allSemestersComplete ? `${overallStats.overallAverage}%` : '-'}
-              </td>
+              {showAnnualAverage && (
+                <td colSpan="3" className="border border-black p-1 text-center">
+                  {allSemestersComplete ? `${overallStats.overallAverage}%` : '-'}
+                </td>
+              )}
             </tr>
 
             <tr>
@@ -673,9 +755,21 @@ export const TraineeAssessmentReportDisplay = ({ reportData, academicYear, onBac
               <th rowSpan="2" className="border border-black p-1 bg-gray-100">Credits</th>
             </tr>
             <tr className="bg-gray-100">
-              {['F.A', 'LA', 'C.A', 'AVG', 'F.A', 'LA', 'C.A', 'AVG', 'F.A', 'LA', 'C.A', 'AVG', 'A.A', 'R.E', 'Observation'].map((label, idx) => (
-                <th key={idx} className="border border-black p-0.5">{label}</th>
+              {semestersToDisplay.map(() => (
+                <>
+                  <th className="border border-black p-0.5">F.A</th>
+                  <th className="border border-black p-0.5">LA</th>
+                  <th className="border border-black p-0.5">C.A</th>
+                  <th className="border border-black p-0.5">AVG</th>
+                </>
               ))}
+              {showAnnualAverage && (
+                <>
+                  <th className="border border-black p-0.5">A.A</th>
+                  <th className="border border-black p-0.5">R.E</th>
+                  <th className="border border-black p-0.5">Observation</th>
+                </>
+              )}
             </tr>
           </thead>
           <tbody>
@@ -692,10 +786,10 @@ export const TraineeAssessmentReportDisplay = ({ reportData, academicYear, onBac
                       <td colSpan="3" className="border border-black p-1">{item.code}</td>
                       <td className="border border-black p-1">{item.title}</td>
                       <td className="border border-black p-1 text-center">{item.credits}</td>
-                      {['Semester 1', 'Semester 2', 'Semester 3'].map(term => {
+                      {semestersToDisplay.map((term, termIdx) => {
                         const termData = item.terms[term] || {};
                         return (
-                          <React.Fragment key={term}>
+                          <React.Fragment key={termIdx}>
                             <td className="border border-black p-1 text-center" style={getMarkStyle(termData.fa, 'specific')}>{termData.fa || '-'}</td>
                             <td className="border border-black p-1 text-center" style={getMarkStyle(termData.la, 'specific')}>{termData.la || '-'}</td>
                             <td className="border border-black p-1 text-center" style={getMarkStyle(termData.ca, 'specific')}>{termData.ca || '-'}</td>
@@ -703,13 +797,17 @@ export const TraineeAssessmentReportDisplay = ({ reportData, academicYear, onBac
                           </React.Fragment>
                         );
                       })}
-                      <td className="border border-black p-1 text-center font-bold" style={getMarkStyle(annualAvg, 'specific')}>
-                        {allSemestersComplete && annualAvg ? annualAvg : '-'}
-                      </td>
-                      <td className="border border-black p-1 text-center font-bold"></td>
-                      <td className="border border-black p-1 text-center font-bold">
-                        {getObservation(item, annualAvg, 'specific')}
-                      </td>
+                      {showAnnualAverage && (
+                        <>
+                          <td className="border border-black p-1 text-center font-bold" style={getMarkStyle(annualAvg, 'specific')}>
+                            {allSemestersComplete && annualAvg ? annualAvg : '-'}
+                          </td>
+                          <td className="border border-black p-1 text-center font-bold"></td>
+                          <td className="border border-black p-1 text-center font-bold">
+                            {getObservation(item, annualAvg, 'specific')}
+                          </td>
+                        </>
+                      )}
                     </tr>
                   );
                 })}
@@ -729,10 +827,10 @@ export const TraineeAssessmentReportDisplay = ({ reportData, academicYear, onBac
                       <td colSpan="3" className="border border-black p-1">{item.code}</td>
                       <td className="border border-black p-1">{item.title}</td>
                       <td className="border border-black p-1 text-center">{item.credits}</td>
-                      {['Semester 1', 'Semester 2', 'Semester 3'].map(term => {
+                      {semestersToDisplay.map((term, termIdx) => {
                         const termData = item.terms[term] || {};
                         return (
-                          <React.Fragment key={term}>
+                          <React.Fragment key={termIdx}>
                             <td className="border border-black p-1 text-center" style={getMarkStyle(termData.fa, 'general')}>{termData.fa || '-'}</td>
                             <td className="border border-black p-1 text-center" style={getMarkStyle(termData.la, 'general')}>{termData.la || '-'}</td>
                             <td className="border border-black p-1 text-center" style={getMarkStyle(termData.ca, 'general')}>{termData.ca || '-'}</td>
@@ -740,13 +838,17 @@ export const TraineeAssessmentReportDisplay = ({ reportData, academicYear, onBac
                           </React.Fragment>
                         );
                       })}
-                      <td className="border border-black p-1 text-center font-bold" style={getMarkStyle(annualAvg, 'general')}>
-                        {allSemestersComplete && annualAvg ? annualAvg : '-'}
-                      </td>
-                      <td className="border border-black p-1 text-center font-bold"></td>
-                      <td className="border border-black p-1 text-center font-bold">
-                        {getObservation(item, annualAvg, 'general')}
-                      </td>
+                      {showAnnualAverage && (
+                        <>
+                          <td className="border border-black p-1 text-center font-bold" style={getMarkStyle(annualAvg, 'general')}>
+                            {allSemestersComplete && annualAvg ? annualAvg : '-'}
+                          </td>
+                          <td className="border border-black p-1 text-center font-bold"></td>
+                          <td className="border border-black p-1 text-center font-bold">
+                            {getObservation(item, annualAvg, 'general')}
+                          </td>
+                        </>
+                      )}
                     </tr>
                   );
                 })}
@@ -766,10 +868,10 @@ export const TraineeAssessmentReportDisplay = ({ reportData, academicYear, onBac
                       <td colSpan="3" className="border border-black p-1">{item.code}</td>
                       <td className="border border-black p-1">{item.title}</td>
                       <td className="border border-black p-1 text-center">{item.credits}</td>
-                      {['Semester 1', 'Semester 2', 'Semester 3'].map(term => {
+                      {semestersToDisplay.map((term, termIdx) => {
                         const termData = item.terms[term] || {};
                         return (
-                          <React.Fragment key={term}>
+                          <React.Fragment key={termIdx}>
                             <td className="border border-black p-1 text-center" style={getMarkStyle(termData.fa, 'complementary')}>{termData.fa || '-'}</td>
                             <td className="border border-black p-1 text-center" style={getMarkStyle(termData.la, 'complementary')}>{termData.la || '-'}</td>
                             <td className="border border-black p-1 text-center" style={getMarkStyle(termData.ca, 'complementary')}>{termData.ca || '-'}</td>
@@ -777,13 +879,17 @@ export const TraineeAssessmentReportDisplay = ({ reportData, academicYear, onBac
                           </React.Fragment>
                         );
                       })}
-                      <td className="border border-black p-1 text-center font-bold" style={getMarkStyle(annualAvg, 'complementary')}>
-                        {allSemestersComplete && annualAvg ? annualAvg : '-'}
-                      </td>
-                      <td className="border border-black p-1 text-center font-bold"></td>
-                      <td className="border border-black p-1 text-center font-bold">
-                        {getObservation(item, annualAvg, 'complementary')}
-                      </td>
+                      {showAnnualAverage && (
+                        <>
+                          <td className="border border-black p-1 text-center font-bold" style={getMarkStyle(annualAvg, 'complementary')}>
+                            {allSemestersComplete && annualAvg ? annualAvg : '-'}
+                          </td>
+                          <td className="border border-black p-1 text-center font-bold"></td>
+                          <td className="border border-black p-1 text-center font-bold">
+                            {getObservation(item, annualAvg, 'complementary')}
+                          </td>
+                        </>
+                      )}
                     </tr>
                   );
                 })}
@@ -807,10 +913,10 @@ export const TraineeAssessmentReportDisplay = ({ reportData, academicYear, onBac
                 <tr className="bg-blue-100 font-bold">
                   <td colSpan="4" className="border border-black p-1 text-left">TOTAL</td>
                   <td className="border border-black p-1 text-center">{overallStats.totalCredits}</td>
-                  {['Semester 1', 'Semester 2', 'Semester 3'].map(term => {
+                  {semestersToDisplay.map((term, idx) => {
                     const semesterTotals = calculateSemesterColumnTotals(term);
                     return (
-                      <React.Fragment key={term}>
+                      <React.Fragment key={idx}>
                         <td className="border border-black p-1 text-center">
                           {semesterTotals.fa ? semesterTotals.fa : '-'}
                         </td>
@@ -823,11 +929,15 @@ export const TraineeAssessmentReportDisplay = ({ reportData, academicYear, onBac
                     );
                   })}
 
-                  <td className="border border-black p-1 text-center">
-                    {allSemestersComplete ? overallStats.totalMarks : '-'}
-                  </td>
-                  <td className="border border-black p-1 text-center"></td>
-                  <td className="border border-black p-1 text-center"></td>
+                  {showAnnualAverage && (
+                    <>
+                      <td className="border border-black p-1 text-center">
+                        {allSemestersComplete ? overallStats.totalMarks : '-'}
+                      </td>
+                      <td className="border border-black p-1 text-center"></td>
+                      <td className="border border-black p-1 text-center"></td>
+                    </>
+                  )}
                 </tr>
 
                 {/* Position Row */}
@@ -835,30 +945,27 @@ export const TraineeAssessmentReportDisplay = ({ reportData, academicYear, onBac
                   <td colSpan="4" className="border border-black p-1 text-left">POSITION</td>
                   <td className="border border-black p-1 text-center"></td>
 
-                  <td colSpan="4" className="border border-black p-1 text-center">
-                    {semester1Result && semester1Result.ranking.position
-                      ? `${semester1Result.ranking.position} out of ${semester1Result.ranking.totalStudents}`
-                      : '-'}
-                  </td>
+                  {semestersToDisplay.map((semester, idx) => {
+                    const result = getSemesterResult(semester);
+                    return (
+                      <td key={idx} colSpan="4" className="border border-black p-1 text-center">
+                        {result && result.ranking.position
+                          ? `${result.ranking.position} out of ${result.ranking.totalStudents}`
+                          : '-'}
+                      </td>
+                    );
+                  })}
 
-                  <td colSpan="4" className="border border-black p-1 text-center">
-                    {semester2Result && semester2Result.ranking.position
-                      ? `${semester2Result.ranking.position} out of ${semester2Result.ranking.totalStudents}`
-                      : '-'}
-                  </td>
-
-                  <td colSpan="4" className="border border-black p-1 text-center">
-                    {semester3Result && semester3Result.ranking.position
-                      ? `${semester3Result.ranking.position} out of ${semester3Result.ranking.totalStudents}`
-                      : '-'}
-                  </td>
-
-                  <td colSpan="2" className="border border-black p-1 text-center">
-                    {allSemestersComplete && overallRanking.position
-                      ? `${overallRanking.position} out of ${overallRanking.totalStudents}`
-                      : '-'}
-                  </td>
-                  <td className="border border-black p-1 text-center"></td>
+                  {showAnnualAverage && (
+                    <>
+                      <td colSpan="2" className="border border-black p-1 text-center">
+                        {allSemestersComplete && overallRanking.position
+                          ? `${overallRanking.position} out of ${overallRanking.totalStudents}`
+                          : '-'}
+                      </td>
+                      <td className="border border-black p-1 text-center"></td>
+                    </>
+                  )}
                 </tr>
               </>
             )}
@@ -867,18 +974,22 @@ export const TraineeAssessmentReportDisplay = ({ reportData, academicYear, onBac
             <tr className="bg-white font-bold">
               <td colSpan="4" className="border border-black p-1 text-left">Class Trainer's Comments & Signature</td>
               <td className="border border-black p-1 text-center"></td>
-              <td colSpan="4" className="border border-black p-1 text-center"></td>
-              <td colSpan="4" className="border border-black p-1 text-center"></td>
-              <td colSpan="4" className="border border-black p-1 text-center"></td>
-              <td colSpan="3" className="border border-black p-1 text-center"></td>
+              {semestersToDisplay.map((_, idx) => (
+                <td key={idx} colSpan="4" className="border border-black p-1 text-center"></td>
+              ))}
+              {showAnnualAverage && (
+                <td colSpan="3" className="border border-black p-1 text-center"></td>
+              )}
             </tr>
             <tr className="bg-white font-bold">
               <td colSpan="4" className="border border-black p-1 text-left">Parents signature</td>
               <td className="border border-black p-1 text-center"></td>
-              <td colSpan="4" className="border border-black p-1 text-center"></td>
-              <td colSpan="4" className="border border-black p-1 text-center"></td>
-              <td colSpan="4" className="border border-black p-1 text-center"></td>
-              <td colSpan="3" className="border border-black p-1 text-center"></td>
+              {semestersToDisplay.map((_, idx) => (
+                <td key={idx} colSpan="4" className="border border-black p-1 text-center"></td>
+              ))}
+              {showAnnualAverage && (
+                <td colSpan="3" className="border border-black p-1 text-center"></td>
+              )}
             </tr>
           </tbody>
         </table>
@@ -915,9 +1026,6 @@ export const TraineeAssessmentReportDisplay = ({ reportData, academicYear, onBac
                 <td className="border border-black p-3 text-center">
                   <input type="checkbox" className="w-4 h-4" />
                 </td>
-
-
-                <td className="border border-black p-3"></td>
                 <td className="border border-black p-3"></td>
               </tr>
             </tbody>
