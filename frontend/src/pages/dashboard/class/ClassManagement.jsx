@@ -433,6 +433,14 @@ const ClassManagementDashboard = () => {
                 <td className="py-3 px-4 text-right space-x-2">
                   <motion.button
                     whileHover={{ scale: 1.1 }}
+                    onClick={() => navigate('/employee/dashboard/marks-entry')}
+                    title="View"
+                    className="text-gray-500 hover:text-primary-600 p-2 rounded-full hover:bg-primary-50"
+                  >
+                    <File className="w-4 h-4" />
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
                     onClick={() => handleView(cls)}
                     title="View"
                     className="text-gray-500 hover:text-primary-600 p-2 rounded-full hover:bg-primary-50"

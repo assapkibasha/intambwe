@@ -146,9 +146,9 @@ const Sidebar = ({ isOpen = true, onClose = () => {} }) => {
           roles: ['teacher', 'admin']
         },
         { 
-          title: 'Marks', 
+          title: 'Reports', 
           icon: Award, 
-          path: '/employee/dashboard/marks',
+          path: '/employee/dashboard/report',
           roles: ['teacher', 'admin']
         },
         { 
