@@ -793,10 +793,10 @@ export const TraineeAssessmentReportDisplay = ({
             <tr className="bg-gray-100">
               {semestersToDisplay.map(() => (
                 <>
-                  <th className="border border-black p-0.5">F.A</th>
-                  <th className="border border-black p-0.5">LA</th>
-                  <th className="border border-black p-0.5">C.A</th>
-                  <th className="border border-black p-0.5">AVG</th>
+                  <th className="border border-black p-0.5">F.A (%)</th>
+                  <th className="border border-black p-0.5">I.A (%)</th>
+                  <th className="border border-black p-0.5">C.A (%)</th>
+                  <th className="border border-black p-0.5">AVG (%)</th>
                 </>
               ))}
               {showAnnualAverage && (
@@ -1100,7 +1100,7 @@ export const TraineeAssessmentReportDisplay = ({
 
         {/* Footer */}
         <div className="bg-gray-100 p-1 text-right text-[8px] border-t border-black">
-          Powered by Intango TSS
+          Powered by INTAMBWE MANAGEMENT SYSTEM 
         </div>
       </div>
     </div>
