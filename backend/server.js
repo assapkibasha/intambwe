@@ -1,6 +1,25 @@
 const express = require("express");
 const cors = require("cors");
-require("dotenv").config();
+const fs = require("fs");
+const path = require("path");
+
+const dotenvPath = (() => {
+  const cwd = __dirname;
+  const candidates = [
+    process.env.DOTENV_PATH,
+    path.join(cwd, ".env"),
+    path.join(cwd, "env"),
+    path.join(cwd, "intambwe.txt"),
+  ].filter(Boolean);
+
+  for (const p of candidates) {
+    if (fs.existsSync(p)) return p;
+  }
+
+  return undefined;
+})();
+
+require("dotenv").config(dotenvPath ? { path: dotenvPath } : undefined);
 const cookieParser = require("cookie-parser");
 const morgan = require("morgan");
 
@@ -21,6 +40,14 @@ const timetableEntryRoutes = require("./routes/timetableEntry/timetableEntryRout
 const tradeRoutes = require("./routes/trade/tradeRoutes");
 const reportRoutes = require("./routes/report/reportRoute");
 const disciplineMarksRoutes = require("./routes/discipline/disciplineMarksRoutes");
+
+const stockInRoutes = require("./routes/stockIn/stockInroutes");
+
+const categoryRoutes = require("./routes/category/categoryRoutes");
+const productRoutes = require("./routes/product/productRoutes");
+const salesRoutes = require("./routes/sales/salesRoutes");
+const stockOutRoutes = require("./routes/stockOut/stockOutRoutes");
+const inventoryRoutes = require("./routes/inventory/inventoryRoutes");
 
 
 
@@ -59,6 +86,14 @@ app.use("/api/trade", tradeRoutes);
 app.use("/api/report", reportRoutes);
 app.use("/api/assessment", assessmentRoutes);
 app.use("/api/discipline-marks", disciplineMarksRoutes);
+
+app.use("/api/stock-in", stockInRoutes);
+
+app.use("/api/categories", categoryRoutes);
+app.use("/api/products", productRoutes);
+app.use("/api/sales", salesRoutes);
+app.use("/api/stock-out", stockOutRoutes);
+app.use("/api/inventory", inventoryRoutes);
 
 
 /* Health Check Route */

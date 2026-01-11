@@ -1,8 +1,9 @@
 // routes/stockIn.js
 const express = require('express');
 const router = express.Router();
-const stockInController = require('../controllers/stockIn/stockInController');
-const { authenticateToken, authorizeRoles } = require('../middleware/employeeAuth');
+const stockInController = require('../../controllers/stockIn/stockInController');
+const { authenticateToken, authorizeRoles } = require('../../middleware/employeeAuth');
+const stockItemController = require('../../controllers/inventory/stockItemController');
 
 // CREATE - Only admin and stock_manager can create stock in records
 router.post(
@@ -31,6 +32,20 @@ router.get(
   '/summary',
   authenticateToken,
   stockInController.getStockInSummary
+);
+
+// STOCK ITEMS - Must be before '/:id' to avoid conflicts
+router.get(
+  '/:id/items',
+  authenticateToken,
+  stockItemController.listStockItems
+);
+
+router.post(
+  '/:id/items',
+  authenticateToken,
+  authorizeRoles('admin', 'stock_manager'),
+  stockItemController.addStockItems
 );
 
 // READ by ID

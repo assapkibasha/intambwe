@@ -14,6 +14,16 @@ const Trade = require("./Trade");
 const SubjectTrade = require("./SubjectTrade");
 const ClassSubject = require("./ClassSubject");
 const DisciplineMarks = require("./DisciplineMarks");
+const StockIn = require("./StockIn");
+const Stock = require("./Stock");
+const Category = require("./Category");
+const Product = require("./Product");
+const Sale = require("./Sale");
+const SaleItem = require("./SaleItem");
+const SaleReturn = require("./SaleReturn");
+const ReturnItem = require("./ReturnItem");
+const StockOut = require("./StockOut");
+const StockOutItem = require("./StockOutItem");
 
 // Define Associations
 
@@ -162,6 +172,37 @@ DisciplineMarks.belongsTo(Employee, {
 });
 
 
+// StockIn Associations
+StockIn.belongsTo(Employee, { foreignKey: "received_by", as: "receiver" });
+
+StockIn.hasMany(Stock, { foreignKey: "stock_inId", as: "stockItems" });
+Stock.belongsTo(StockIn, { foreignKey: "stock_inId" });
+
+Category.hasMany(Product, { foreignKey: "category_id", as: "products" });
+Product.belongsTo(Category, { foreignKey: "category_id", as: "category" });
+
+Product.hasMany(Stock, { foreignKey: "item_id", as: "stockBatches" });
+Stock.belongsTo(Product, { foreignKey: "item_id", as: "product" });
+
+Sale.belongsTo(Employee, { foreignKey: "created_by", as: "creator" });
+Sale.hasMany(SaleItem, { foreignKey: "sale_id", as: "items" });
+SaleItem.belongsTo(Sale, { foreignKey: "sale_id" });
+SaleItem.belongsTo(Product, { foreignKey: "item_id", as: "product" });
+
+Sale.hasMany(SaleReturn, { foreignKey: "sale_id", as: "returns" });
+
+SaleReturn.belongsTo(Sale, { foreignKey: "sale_id", as: "sale" });
+SaleReturn.belongsTo(Employee, { foreignKey: "returned_by", as: "returnedBy" });
+SaleReturn.hasMany(ReturnItem, { foreignKey: "return_id", as: "items" });
+ReturnItem.belongsTo(SaleReturn, { foreignKey: "return_id" });
+ReturnItem.belongsTo(Product, { foreignKey: "item_id", as: "product" });
+
+StockOut.belongsTo(Employee, { foreignKey: "issued_by", as: "issuer" });
+StockOut.hasMany(StockOutItem, { foreignKey: "stock_outId", as: "items" });
+StockOutItem.belongsTo(StockOut, { foreignKey: "stock_outId" });
+StockOutItem.belongsTo(Product, { foreignKey: "item_id", as: "product" });
+
+
 
 // Sync database
 const syncDatabase = async () => {
@@ -195,4 +236,14 @@ module.exports = {
   Trade,
   ClassSubject,
   DisciplineMarks,
+  StockIn,
+  Stock,
+  Category,
+  Product,
+  Sale,
+  SaleItem,
+  SaleReturn,
+  ReturnItem,
+  StockOut,
+  StockOutItem,
 };

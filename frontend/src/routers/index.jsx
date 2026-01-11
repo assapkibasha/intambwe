@@ -11,6 +11,14 @@ import DepartmentDashboard from "../pages/dashboard/DepartmentPage";
 import EmployeeManagementDashboard from "../pages/dashboard/EmployeeManagement";
 import TradeManagementSystem from "../pages/dashboard/employee/trade/TradeManagementSystem";
 
+import CategoryPage from "../pages/dashboard/inventory/CategoryPage";
+import ProductPage from "../pages/dashboard/inventory/ProductPage";
+import InventoryPage from "../pages/dashboard/inventory/InventoryPage";
+import StockInPage from "../pages/dashboard/inventory/StockInPage";
+import StockOutPage from "../pages/dashboard/inventory/StockOutPage";
+import SalesReportPage from "../pages/dashboard/inventory/SalesReportPage";
+import SalesReturnPage from "../pages/dashboard/inventory/SalesReturnPage";
+
 import StudentManagementDashboard from "../pages/dashboard/StudentManagementDashboard";
 import ClassManagementDashboard from "../pages/dashboard/class/ClassManagement";
 
@@ -82,6 +90,13 @@ const router = createBrowserRouter([
           { path: "attendance", element: <AttendanceDashboard /> },
           { path: "attendance/mark", element: <AttendanceMarkingPage /> },
           { path: "my-subjects", element: <MySubjectsPage /> },
+          { path: "category", element: <CategoryPage /> },
+          { path: "product", element: <ProductPage /> },
+          { path: "inventory", element: <InventoryPage /> },
+          { path: "stockin", element: <StockInPage /> },
+          { path: "stockout", element: <StockOutPage /> },
+          { path: "sales-report", element: <SalesReportPage /> },
+          { path: "sales-return", element: <SalesReturnPage /> },
              { path:"class", element: <ClassSelectionPage /> },
              { path:"discipline-entry", element: <DisciplineEntryPage /> },
     { path: "class/:classId", element: <StudentListPage /> },

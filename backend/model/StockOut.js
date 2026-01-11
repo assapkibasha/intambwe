@@ -1,11 +1,10 @@
-// models/StockIn.js
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/database");
 
-const StockIn = sequelize.define(
-  "StockIn",
+const StockOut = sequelize.define(
+  "StockOut",
   {
-    stock_inId: {
+    stock_outId: {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
@@ -15,54 +14,55 @@ const StockIn = sequelize.define(
       allowNull: false,
       unique: true,
     },
-    supplier_name: {
-      type: DataTypes.STRING(100),
-      allowNull: false,
-    },
-    supplier_contact: {
-      type: DataTypes.STRING(50),
-      allowNull: true,
-    },
-    received_by: {
+    issued_by: {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
-    received_date: {
+    issued_date: {
       type: DataTypes.DATE,
       allowNull: false,
+    },
+    issued_to_type: {
+      type: DataTypes.ENUM("student", "department", "other"),
+      allowNull: false,
+      defaultValue: "other",
+    },
+    issued_to: {
+      type: DataTypes.STRING(150),
+      allowNull: true,
     },
     notes: {
       type: DataTypes.TEXT,
       allowNull: true,
     },
     status: {
-      type: DataTypes.ENUM("pending", "received", "cancelled"),
+      type: DataTypes.ENUM("pending", "issued", "cancelled"),
       allowNull: false,
-      defaultValue: "pending",
+      defaultValue: "issued",
     },
   },
   {
-    tableName: "StockIn",
+    tableName: "StockOut",
     timestamps: true,
     indexes: [
       {
-        name: "idx_stockin_reference",
+        name: "idx_stockout_reference",
         fields: ["reference_number"],
       },
       {
-        name: "idx_stockin_status",
+        name: "idx_stockout_status",
         fields: ["status"],
       },
       {
-        name: "idx_stockin_received_by",
-        fields: ["received_by"],
+        name: "idx_stockout_issued_by",
+        fields: ["issued_by"],
       },
       {
-        name: "idx_stockin_received_date",
-        fields: ["received_date"],
+        name: "idx_stockout_issued_date",
+        fields: ["issued_date"],
       },
     ],
   }
 );
 
-module.exports = StockIn;
+module.exports = StockOut;

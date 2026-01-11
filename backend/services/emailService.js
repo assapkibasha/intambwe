@@ -6,25 +6,31 @@ const handlebars = require('handlebars');
 
 class EmailService {
   constructor() {
+    const hasCredentials = Boolean(process.env.EMAIL_USER && process.env.EMAIL_PASSWORD);
+
     // Create transporter with your email service credentials
     this.transporter = nodemailer.createTransport({
       host: process.env.EMAIL_HOST || 'smtp.gmail.com',
       port: process.env.EMAIL_PORT || 587,
       secure: false, // true for 465, false for other ports
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD,
-      },
+      auth: hasCredentials
+        ? {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASSWORD,
+          }
+        : undefined,
     });
 
     // Verify transporter configuration
-    this.transporter.verify((error, success) => {
-      if (error) {
-        console.error('Email service configuration error:', error);
-      } else {
-        console.log('Email service is ready to send messages');
-      }
-    });
+    if (hasCredentials) {
+      this.transporter.verify((error, success) => {
+        if (error) {
+          console.error('Email service configuration error:', error);
+        } else {
+          console.log('Email service is ready to send messages');
+        }
+      });
+    }
   }
 
   /**

@@ -1,7 +1,7 @@
 // controllers/stockIn/stockInController.js
 const { StockIn, Stock, Employee } = require("../../model");
 const { Op } = require("sequelize");
-const stockInValidator = require("../../validators/stockinValidator");
+const stockInValidator = require("../../validators/stockInValidator");
 const stockInController = {
   // CREATE - Add new stock in entry
   async createStockIn(req, res) {

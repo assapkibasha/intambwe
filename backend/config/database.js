@@ -3,7 +3,25 @@
 // ===================================
 const { Sequelize } = require("sequelize");
 const fs = require("fs");
-require("dotenv").config();
+const path = require("path");
+
+const dotenvPath = (() => {
+  const cwd = path.resolve(__dirname, "..");
+  const candidates = [
+    process.env.DOTENV_PATH,
+    path.join(cwd, ".env"),
+    path.join(cwd, "env"),
+    path.join(cwd, "intambwe.txt"),
+  ].filter(Boolean);
+
+  for (const p of candidates) {
+    if (fs.existsSync(p)) return p;
+  }
+
+  return undefined;
+})();
+
+require("dotenv").config(dotenvPath ? { path: dotenvPath } : undefined);
 
 const sequelize = new Sequelize(
   process.env.DB_NAME,
